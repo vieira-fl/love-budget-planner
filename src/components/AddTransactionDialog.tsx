@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType } from '@/types/finance';
 import { Plus, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,6 +36,7 @@ export function AddTransactionDialog({
   const [person, setPerson] = useState<'pessoa1' | 'pessoa2'>('pessoa1');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('pontual');
+  const [includeInSplit, setIncludeInSplit] = useState(true);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -51,6 +53,7 @@ export function AddTransactionDialog({
       person,
       date: new Date(date),
       recurrence,
+      includeInSplit: type === 'expense' ? includeInSplit : false,
     });
 
     // Reset form
@@ -58,6 +61,7 @@ export function AddTransactionDialog({
     setAmount('');
     setCategory('outros');
     setRecurrence('pontual');
+    setIncludeInSplit(true);
     setOpen(false);
   };
 
@@ -239,6 +243,24 @@ export function AddTransactionDialog({
               required
             />
           </div>
+
+          {type === 'expense' && (
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="include-split" className="text-foreground text-sm font-medium">
+                  Incluir no rateio
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Incluir esta despesa no cálculo de divisão entre o casal
+                </p>
+              </div>
+              <Switch
+                id="include-split"
+                checked={includeInSplit}
+                onCheckedChange={setIncludeInSplit}
+              />
+            </div>
+          )}
 
           <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground">
             Adicionar

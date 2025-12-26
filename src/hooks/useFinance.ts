@@ -8,7 +8,8 @@ import {
   defaultExpenseCategoryLabels,
   defaultIncomeCategoryLabels,
   MonthlyComparison,
-  CategoryChange
+  CategoryChange,
+  SplitCalculation
 } from '@/types/finance';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,6 +24,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa1',
     date: new Date(2024, 11, 5),
     recurrence: 'recorrente',
+    includeInSplit: false,
   },
   {
     id: '2',
@@ -33,6 +35,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa2',
     date: new Date(2024, 11, 5),
     recurrence: 'recorrente',
+    includeInSplit: false,
   },
   {
     id: '3',
@@ -43,6 +46,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa1',
     date: new Date(2024, 11, 10),
     recurrence: 'recorrente',
+    includeInSplit: true,
   },
   {
     id: '4',
@@ -53,6 +57,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa2',
     date: new Date(2024, 11, 15),
     recurrence: 'recorrente',
+    includeInSplit: true,
   },
   {
     id: '5',
@@ -63,6 +68,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa1',
     date: new Date(2024, 11, 1),
     recurrence: 'recorrente',
+    includeInSplit: true,
   },
   {
     id: '6',
@@ -73,6 +79,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa1',
     date: new Date(2024, 11, 20),
     recurrence: 'recorrente',
+    includeInSplit: true,
   },
   {
     id: '7',
@@ -83,8 +90,8 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa2',
     date: new Date(2024, 11, 18),
     recurrence: 'pontual',
+    includeInSplit: true,
   },
-  // Add some previous month data for comparison
   {
     id: '8',
     type: 'expense',
@@ -94,6 +101,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa2',
     date: new Date(2024, 10, 15),
     recurrence: 'recorrente',
+    includeInSplit: true,
   },
   {
     id: '9',
@@ -104,6 +112,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa1',
     date: new Date(2024, 10, 10),
     recurrence: 'recorrente',
+    includeInSplit: true,
   },
   {
     id: '10',
@@ -114,6 +123,7 @@ const initialTransactions: Transaction[] = [
     person: 'pessoa1',
     date: new Date(2024, 10, 1),
     recurrence: 'recorrente',
+    includeInSplit: true,
   },
 ];
 
@@ -200,7 +210,6 @@ export function useFinance() {
     const now = new Date();
     const months: MonthlyComparison[] = [];
 
-    // Get last 6 months
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(now, i);
       const monthStart = startOfMonth(monthDate);
@@ -266,18 +275,6 @@ export function useFinance() {
     return biggestChange;
   }, [monthlyComparison, expenseCategoryLabels]);
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now().toString(),
-    };
-    setTransactions(prev => [...prev, newTransaction]);
-  };
-
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
-  };
-
   const incomeByPerson = useMemo(() => {
     const person1Income = transactions
       .filter(t => t.type === 'income' && t.person === 'pessoa1')
@@ -297,6 +294,89 @@ export function useFinance() {
       .reduce((sum, t) => sum + t.amount, 0);
     return { pessoa1: person1Expenses, pessoa2: person2Expenses };
   }, [transactions]);
+
+  const splitCalculation = useMemo((): SplitCalculation => {
+    const person1Income = incomeByPerson.pessoa1;
+    const person2Income = incomeByPerson.pessoa2;
+    const totalIncomeCalc = person1Income + person2Income;
+
+    // Calculate income contribution percentages
+    const person1IncomePercentage = totalIncomeCalc > 0 ? (person1Income / totalIncomeCalc) * 100 : 50;
+    const person2IncomePercentage = totalIncomeCalc > 0 ? (person2Income / totalIncomeCalc) * 100 : 50;
+
+    // Get only shared expenses (includeInSplit = true)
+    const sharedExpenses = transactions.filter(t => t.type === 'expense' && t.includeInSplit);
+    const totalSharedExpenses = sharedExpenses.reduce((sum, t) => sum + t.amount, 0);
+
+    // Calculate ideal share based on income percentage
+    const person1IdealShare = (person1IncomePercentage / 100) * totalSharedExpenses;
+    const person2IdealShare = (person2IncomePercentage / 100) * totalSharedExpenses;
+
+    // Calculate actual paid amounts for shared expenses
+    const person1ActualPaid = sharedExpenses
+      .filter(t => t.person === 'pessoa1')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const person2ActualPaid = sharedExpenses
+      .filter(t => t.person === 'pessoa2')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    // Calculate expense-to-income ratio for each person (based on actual shared expenses paid)
+    const person1ExpenseToIncomeRatio = person1Income > 0 ? (person1ActualPaid / person1Income) * 100 : 0;
+    const person2ExpenseToIncomeRatio = person2Income > 0 ? (person2ActualPaid / person2Income) * 100 : 0;
+
+    // Calculate settlement
+    const person1Difference = person1ActualPaid - person1IdealShare;
+    const person2Difference = person2ActualPaid - person2IdealShare;
+
+    let settlement: SplitCalculation['settlement'] = {
+      fromPerson: null,
+      toPerson: null,
+      amount: 0,
+    };
+
+    if (Math.abs(person1Difference) > 0.01) {
+      if (person1Difference > 0) {
+        // Person 1 paid more than their ideal share
+        settlement = {
+          fromPerson: 'pessoa2',
+          toPerson: 'pessoa1',
+          amount: person1Difference,
+        };
+      } else {
+        // Person 2 paid more than their ideal share
+        settlement = {
+          fromPerson: 'pessoa1',
+          toPerson: 'pessoa2',
+          amount: Math.abs(person1Difference),
+        };
+      }
+    }
+
+    return {
+      person1IncomePercentage,
+      person2IncomePercentage,
+      totalSharedExpenses,
+      person1IdealShare,
+      person2IdealShare,
+      person1ActualPaid,
+      person2ActualPaid,
+      person1ExpenseToIncomeRatio,
+      person2ExpenseToIncomeRatio,
+      settlement,
+    };
+  }, [transactions, incomeByPerson]);
+
+  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
+    const newTransaction: Transaction = {
+      ...transaction,
+      id: Date.now().toString(),
+    };
+    setTransactions(prev => [...prev, newTransaction]);
+  };
+
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+  };
 
   return {
     transactions,
@@ -319,5 +399,6 @@ export function useFinance() {
     top10Expenses,
     monthlyComparison,
     biggestCategoryIncrease,
+    splitCalculation,
   };
 }
