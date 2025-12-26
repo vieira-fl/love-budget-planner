@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter, addQuarters } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,8 @@ interface PeriodFilterProps {
   onStartDateChange: (date: Date | undefined) => void;
   onEndDateChange: (date: Date | undefined) => void;
   onClearFilter: () => void;
+  onMonthOnlyFilter?: (month: number | undefined) => void;
+  monthOnlyFilter?: number | undefined;
 }
 
 const months = [
@@ -41,6 +43,21 @@ const months = [
   { value: '9', label: 'Outubro' },
   { value: '10', label: 'Novembro' },
   { value: '11', label: 'Dezembro' },
+];
+
+const monthsOnlyFilter = [
+  { value: '0', label: 'Janeiro (todos os anos)' },
+  { value: '1', label: 'Fevereiro (todos os anos)' },
+  { value: '2', label: 'Março (todos os anos)' },
+  { value: '3', label: 'Abril (todos os anos)' },
+  { value: '4', label: 'Maio (todos os anos)' },
+  { value: '5', label: 'Junho (todos os anos)' },
+  { value: '6', label: 'Julho (todos os anos)' },
+  { value: '7', label: 'Agosto (todos os anos)' },
+  { value: '8', label: 'Setembro (todos os anos)' },
+  { value: '9', label: 'Outubro (todos os anos)' },
+  { value: '10', label: 'Novembro (todos os anos)' },
+  { value: '11', label: 'Dezembro (todos os anos)' },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -62,14 +79,23 @@ export function PeriodFilter({
   onStartDateChange,
   onEndDateChange,
   onClearFilter,
+  onMonthOnlyFilter,
+  monthOnlyFilter,
 }: PeriodFilterProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [selectedQuarter, setSelectedQuarter] = useState<string>('');
+  const [selectedMonthOnly, setSelectedMonthOnly] = useState<string>('');
 
   const handleMonthYearSelect = () => {
     if (selectedYear) {
       const year = parseInt(selectedYear);
+      
+      // Clear month-only filter when using month+year
+      if (onMonthOnlyFilter) {
+        onMonthOnlyFilter(undefined);
+        setSelectedMonthOnly('');
+      }
       
       if (selectedMonth && selectedMonth !== 'none') {
         // Specific month selected
@@ -99,6 +125,26 @@ export function PeriodFilter({
       onStartDateChange(start);
       onEndDateChange(end);
       setSelectedMonth('');
+      
+      // Clear month-only filter
+      if (onMonthOnlyFilter) {
+        onMonthOnlyFilter(undefined);
+        setSelectedMonthOnly('');
+      }
+    }
+  };
+
+  const handleMonthOnlySelect = () => {
+    if (selectedMonthOnly && onMonthOnlyFilter) {
+      const month = parseInt(selectedMonthOnly);
+      onMonthOnlyFilter(month);
+      
+      // Clear date range filters
+      onStartDateChange(undefined);
+      onEndDateChange(undefined);
+      setSelectedMonth('');
+      setSelectedYear('');
+      setSelectedQuarter('');
     }
   };
 
@@ -106,10 +152,20 @@ export function PeriodFilter({
     setSelectedMonth('');
     setSelectedYear('');
     setSelectedQuarter('');
+    setSelectedMonthOnly('');
+    if (onMonthOnlyFilter) {
+      onMonthOnlyFilter(undefined);
+    }
     onClearFilter();
   };
 
-  const isFiltered = startDate || endDate;
+  const isFiltered = startDate || endDate || monthOnlyFilter !== undefined;
+
+  const getMonthLabel = (monthIndex: number) => {
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    return monthNames[monthIndex];
+  };
 
   return (
     <div className="bg-card rounded-xl p-4 card-shadow">
@@ -133,7 +189,7 @@ export function PeriodFilter({
       </div>
 
       {/* All Filters in Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Month/Year Select */}
         <div className="space-y-2">
           <span className="text-xs text-muted-foreground font-medium">Mês e Ano</span>
@@ -169,6 +225,36 @@ export function PeriodFilter({
               size="icon"
               onClick={handleMonthYearSelect}
               disabled={!selectedYear}
+              className="h-10 w-10 shrink-0"
+              title="Aplicar"
+            >
+              ✓
+            </Button>
+          </div>
+        </div>
+
+        {/* Month Only (all years) */}
+        <div className="space-y-2">
+          <span className="text-xs text-muted-foreground font-medium">Só o Mês (todos os anos)</span>
+          <div className="flex gap-2">
+            <Select value={selectedMonthOnly} onValueChange={setSelectedMonthOnly}>
+              <SelectTrigger className="flex-1 min-w-0">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {monthsOnlyFilter.map((month) => (
+                  <SelectItem key={month.value} value={month.value}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleMonthOnlySelect}
+              disabled={!selectedMonthOnly || !onMonthOnlyFilter}
               className="h-10 w-10 shrink-0"
               title="Aplicar"
             >
@@ -275,11 +361,17 @@ export function PeriodFilter({
       {/* Active Filter Badge */}
       {isFiltered && (
         <div className="pt-3 mt-3 border-t border-border">
-          <Badge variant="secondary" className="text-xs">
-            Exibindo: {startDate ? format(startDate, "dd/MM/yyyy", { locale: ptBR }) : "..."} 
-            {" - "}
-            {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "..."}
-          </Badge>
+          {monthOnlyFilter !== undefined ? (
+            <Badge variant="secondary" className="text-xs">
+              Exibindo: {getMonthLabel(monthOnlyFilter)} de todos os anos
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="text-xs">
+              Exibindo: {startDate ? format(startDate, "dd/MM/yyyy", { locale: ptBR }) : "..."} 
+              {" - "}
+              {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "..."}
+            </Badge>
+          )}
         </div>
       )}
     </div>

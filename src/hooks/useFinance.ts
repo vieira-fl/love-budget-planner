@@ -17,6 +17,7 @@ import { ptBR } from 'date-fns/locale';
 export interface PeriodFilter {
   startDate: Date | undefined;
   endDate: Date | undefined;
+  monthOnly?: number | undefined; // 0-11 for Jan-Dec across all years
 }
 
 const initialTransactions: Transaction[] = [
@@ -287,6 +288,14 @@ export function useFinance(periodFilter?: PeriodFilter) {
 
   // Filter transactions by period
   const filteredTransactions = useMemo(() => {
+    // If monthOnly filter is active, filter by month across all years
+    if (periodFilter?.monthOnly !== undefined) {
+      return transactions.filter(t => {
+        const transactionDate = new Date(t.date);
+        return transactionDate.getMonth() === periodFilter.monthOnly;
+      });
+    }
+
     if (!periodFilter?.startDate && !periodFilter?.endDate) {
       return transactions;
     }
@@ -311,7 +320,7 @@ export function useFinance(periodFilter?: PeriodFilter) {
       
       return true;
     });
-  }, [transactions, periodFilter?.startDate, periodFilter?.endDate]);
+  }, [transactions, periodFilter?.startDate, periodFilter?.endDate, periodFilter?.monthOnly]);
   const expenseCategoryLabels = useMemo(() => ({
     ...defaultExpenseCategoryLabels,
     ...customExpenseCategories,
@@ -385,8 +394,8 @@ export function useFinance(periodFilter?: PeriodFilter) {
   }, [filteredTransactions]);
 
   const monthlyComparison = useMemo((): MonthlyComparison[] => {
-    // Get unique months from all transactions (not just filtered)
-    const expenseTransactions = transactions.filter(t => t.type === 'expense');
+    // Use filtered transactions to respect period filter
+    const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
     
     if (expenseTransactions.length === 0) {
       return [];
@@ -436,7 +445,7 @@ export function useFinance(periodFilter?: PeriodFilter) {
     });
 
     return months;
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const biggestCategoryIncrease = useMemo((): CategoryChange | null => {
     if (monthlyComparison.length < 2) return null;
