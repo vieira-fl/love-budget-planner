@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TrendingUp, TrendingDown, Wallet, PiggyBank } from 'lucide-react';
 import { useFinance } from '@/hooks/useFinance';
 import { SummaryCard } from '@/components/SummaryCard';
-import { CategoryAnalysisCard } from '@/components/CategoryAnalysisCard';
+import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
 import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { ExpenseChart } from '@/components/ExpenseChart';
@@ -117,7 +117,7 @@ const Index = () => {
             variant="expense"
           />
           <SummaryCard
-            title="Saldo do Mês"
+            title="Saldo Total"
             value={balance}
             icon={Wallet}
             variant="balance"
@@ -174,18 +174,8 @@ const Index = () => {
               <ExpenseChart data={categoryAnalysis} />
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">Análise por Categoria</h2>
-                <div className="grid gap-4 max-h-[340px] overflow-y-auto pr-2">
-                  {categoryAnalysis.length > 0 ? (
-                    categoryAnalysis.map((analysis, index) => (
-                      <CategoryAnalysisCard key={analysis.category} analysis={analysis} index={index} />
-                    ))
-                  ) : (
-                    <div className="bg-card rounded-xl p-6 card-shadow text-center">
-                      <p className="text-muted-foreground">
-                        Adicione despesas para ver a análise por categoria
-                      </p>
-                    </div>
-                  )}
+                <div className="max-h-[340px] overflow-y-auto">
+                  <CategoryAnalysisTable analysisData={categoryAnalysis} />
                 </div>
               </div>
             </section>

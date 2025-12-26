@@ -66,6 +66,8 @@ export default {
           DEFAULT: "hsl(var(--expense))",
           foreground: "hsl(var(--expense-foreground))",
         },
+        "balance-positive": "hsl(var(--balance-positive))",
+        "balance-negative": "hsl(var(--balance-negative))",
         chart: {
           1: "hsl(var(--chart-1))",
           2: "hsl(var(--chart-2))",
