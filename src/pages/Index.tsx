@@ -27,6 +27,8 @@ const Index = () => {
     balance,
     categoryAnalysis,
     addTransaction,
+    addMultipleTransactions,
+    updateTransaction,
     deleteTransaction,
     person1Name,
     person2Name,
@@ -75,6 +77,7 @@ const Index = () => {
               />
               <AddTransactionDialog
                 onAdd={addTransaction}
+                onAddMultiple={addMultipleTransactions}
                 person1Name={person1Name}
                 person2Name={person2Name}
                 expenseCategoryLabels={expenseCategoryLabels}
@@ -202,8 +205,11 @@ const Index = () => {
               <TransactionList
                 transactions={transactions}
                 onDelete={deleteTransaction}
+                onUpdate={updateTransaction}
                 person1Name={person1Name}
                 person2Name={person2Name}
+                expenseCategoryLabels={expenseCategoryLabels}
+                incomeCategoryLabels={incomeCategoryLabels}
               />
             </section>
           </TabsContent>
