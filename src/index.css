@@ -42,6 +42,9 @@
     --expense: 0 72% 51%;
     --expense-foreground: 0 0% 100%;
 
+    --balance-positive: 210 80% 50%;
+    --balance-negative: 0 65% 40%;
+
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 160 84% 39%;
@@ -101,6 +104,9 @@
 
     --expense: 0 62% 50%;
     --expense-foreground: 0 0% 100%;
+
+    --balance-positive: 210 70% 55%;
+    --balance-negative: 0 55% 45%;
 
     --border: 220 15% 22%;
     --input: 220 15% 22%;

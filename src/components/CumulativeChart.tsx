@@ -65,6 +65,10 @@ export function CumulativeChart({ transactions }: CumulativeChartProps) {
     });
   }, [transactions]);
 
+  // Determine if final balance is positive or negative for line color
+  const finalBalance = chartData.length > 0 ? chartData[chartData.length - 1].cumulativeBalance : 0;
+  const balanceColor = finalBalance >= 0 ? 'hsl(210 80% 50%)' : 'hsl(0 65% 40%)';
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -168,9 +172,9 @@ export function CumulativeChart({ transactions }: CumulativeChartProps) {
               <Line
                 type="monotone"
                 dataKey="cumulativeBalance"
-                stroke="hsl(var(--primary))"
+                stroke={balanceColor}
                 strokeWidth={3}
-                dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 3 }}
+                dot={{ fill: balanceColor, strokeWidth: 0, r: 3 }}
                 activeDot={{ r: 5, strokeWidth: 0 }}
               />
             </LineChart>

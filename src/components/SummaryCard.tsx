@@ -17,24 +17,19 @@ export function SummaryCard({ title, value, icon: Icon, variant, className }: Su
     }).format(amount);
   };
 
+  const isPositiveBalance = variant === 'balance' && value >= 0;
+  const isNegativeBalance = variant === 'balance' && value < 0;
+
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-xl p-6 card-shadow transition-all duration-300 hover:card-shadow-lg animate-fade-in',
-        variant === 'income' && 'bg-card',
-        variant === 'expense' && 'bg-card',
-        variant === 'balance' && 'gradient-primary',
+        'relative overflow-hidden rounded-xl p-6 card-shadow transition-all duration-300 hover:card-shadow-lg animate-fade-in bg-card',
         className
       )}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <p
-            className={cn(
-              'text-sm font-medium',
-              variant === 'balance' ? 'text-primary-foreground/80' : 'text-muted-foreground'
-            )}
-          >
+          <p className="text-sm font-medium text-muted-foreground">
             {title}
           </p>
           <p
@@ -42,7 +37,8 @@ export function SummaryCard({ title, value, icon: Icon, variant, className }: Su
               'text-2xl font-bold tracking-tight',
               variant === 'income' && 'text-income',
               variant === 'expense' && 'text-expense',
-              variant === 'balance' && 'text-primary-foreground'
+              isPositiveBalance && 'text-balance-positive',
+              isNegativeBalance && 'text-balance-negative'
             )}
           >
             {formatCurrency(value)}
@@ -53,7 +49,8 @@ export function SummaryCard({ title, value, icon: Icon, variant, className }: Su
             'rounded-lg p-3',
             variant === 'income' && 'bg-income/10',
             variant === 'expense' && 'bg-expense/10',
-            variant === 'balance' && 'bg-primary-foreground/20'
+            isPositiveBalance && 'bg-balance-positive/10',
+            isNegativeBalance && 'bg-balance-negative/10'
           )}
         >
           <Icon
@@ -61,7 +58,8 @@ export function SummaryCard({ title, value, icon: Icon, variant, className }: Su
               'h-5 w-5',
               variant === 'income' && 'text-income',
               variant === 'expense' && 'text-expense',
-              variant === 'balance' && 'text-primary-foreground'
+              isPositiveBalance && 'text-balance-positive',
+              isNegativeBalance && 'text-balance-negative'
             )}
           />
         </div>
