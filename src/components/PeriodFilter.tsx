@@ -112,8 +112,9 @@ export function PeriodFilter({
   const isFiltered = startDate || endDate;
 
   return (
-    <div className="bg-card rounded-xl p-4 card-shadow space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="bg-card rounded-xl p-4 card-shadow">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
           <CalendarIcon className="h-4 w-4 text-primary" />
           Filtrar por Período
@@ -131,137 +132,149 @@ export function PeriodFilter({
         )}
       </div>
 
-      {/* Month/Year Quick Select */}
-      <div className="space-y-3">
-        <div className="flex flex-wrap gap-2">
-          <Select value={selectedYear} onValueChange={(val) => { setSelectedYear(val); setSelectedQuarter(''); }}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Ano" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year.value} value={year.value}>
-                  {year.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* All Filters in Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Month/Year Select */}
+        <div className="space-y-2">
+          <span className="text-xs text-muted-foreground font-medium">Mês e Ano</span>
+          <div className="flex gap-2">
+            <Select value={selectedYear} onValueChange={(val) => { setSelectedYear(val); setSelectedQuarter(''); }}>
+              <SelectTrigger className="flex-1 min-w-0">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((year) => (
+                  <SelectItem key={year.value} value={year.value}>
+                    {year.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={selectedMonth} onValueChange={(val) => { setSelectedMonth(val); setSelectedQuarter(''); }}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Mês" />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((month) => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={selectedMonth} onValueChange={(val) => { setSelectedMonth(val); setSelectedQuarter(''); }}>
+              <SelectTrigger className="flex-1 min-w-0">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month) => (
+                  <SelectItem key={month.value} value={month.value}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleMonthYearSelect}
-            disabled={!selectedYear}
-            className="h-10"
-          >
-            Aplicar
-          </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleMonthYearSelect}
+              disabled={!selectedYear}
+              className="h-10 w-10 shrink-0"
+              title="Aplicar"
+            >
+              ✓
+            </Button>
+          </div>
         </div>
 
         {/* Quarterly Select */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs text-muted-foreground">Ou por trimestre:</span>
-          <Select value={selectedQuarter} onValueChange={(val) => { setSelectedQuarter(val); setSelectedMonth(''); }}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Selecione o trimestre" />
-            </SelectTrigger>
-            <SelectContent>
-              {quarters.map((quarter) => (
-                <SelectItem key={quarter.value} value={quarter.value}>
-                  {quarter.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="space-y-2">
+          <span className="text-xs text-muted-foreground font-medium">Trimestre</span>
+          <div className="flex gap-2">
+            <Select value={selectedQuarter} onValueChange={(val) => { setSelectedQuarter(val); setSelectedMonth(''); }}>
+              <SelectTrigger className="flex-1 min-w-0">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {quarters.map((quarter) => (
+                  <SelectItem key={quarter.value} value={quarter.value}>
+                    {quarter.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleQuarterSelect}
-            disabled={!selectedQuarter || !selectedYear}
-            className="h-10"
-          >
-            Aplicar
-          </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleQuarterSelect}
+              disabled={!selectedQuarter || !selectedYear}
+              className="h-10 w-10 shrink-0"
+              title="Aplicar"
+            >
+              ✓
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Date Range Picker */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs text-muted-foreground">Ou período personalizado:</span>
-        <div className="flex gap-2 flex-wrap">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "w-[130px] justify-start text-left font-normal h-9",
-                  !startDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-3 w-3" />
-                {startDate ? format(startDate, "dd/MM/yyyy", { locale: ptBR }) : "Início"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={onStartDateChange}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
+        {/* Date Range Picker */}
+        <div className="space-y-2">
+          <span className="text-xs text-muted-foreground font-medium">Período Personalizado</span>
+          <div className="flex gap-2 items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "flex-1 min-w-0 justify-start text-left font-normal h-10",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-3 w-3 shrink-0" />
+                  <span className="truncate">
+                    {startDate ? format(startDate, "dd/MM/yy", { locale: ptBR }) : "Início"}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={onStartDateChange}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
 
-          <span className="text-muted-foreground self-center">até</span>
+            <span className="text-muted-foreground text-xs shrink-0">→</span>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "w-[130px] justify-start text-left font-normal h-9",
-                  !endDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-3 w-3" />
-                {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "Fim"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={onEndDateChange}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "flex-1 min-w-0 justify-start text-left font-normal h-10",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-3 w-3 shrink-0" />
+                  <span className="truncate">
+                    {endDate ? format(endDate, "dd/MM/yy", { locale: ptBR }) : "Fim"}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={onEndDateChange}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 
       {/* Active Filter Badge */}
       {isFiltered && (
-        <div className="pt-2 border-t border-border">
+        <div className="pt-3 mt-3 border-t border-border">
           <Badge variant="secondary" className="text-xs">
             Exibindo: {startDate ? format(startDate, "dd/MM/yyyy", { locale: ptBR }) : "..."} 
             {" - "}

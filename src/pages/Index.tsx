@@ -13,6 +13,7 @@ import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
 import { PersonSummaryCard } from '@/components/PersonSummaryCard';
 import { DetailedSplitCard } from '@/components/DetailedSplitCard';
 import { PeriodFilter } from '@/components/PeriodFilter';
+import { CumulativeChart } from '@/components/CumulativeChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
@@ -160,6 +161,11 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
+            {/* Cumulative Evolution Chart */}
+            <section>
+              <CumulativeChart transactions={transactions} />
+            </section>
+
             {/* Charts and Analysis */}
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <ExpenseChart data={categoryAnalysis} />
