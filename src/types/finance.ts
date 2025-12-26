@@ -31,6 +31,24 @@ export interface Transaction {
   person: 'pessoa1' | 'pessoa2';
   date: Date;
   recurrence: RecurrenceType;
+  includeInSplit: boolean;
+}
+
+export interface SplitCalculation {
+  person1IncomePercentage: number;
+  person2IncomePercentage: number;
+  totalSharedExpenses: number;
+  person1IdealShare: number;
+  person2IdealShare: number;
+  person1ActualPaid: number;
+  person2ActualPaid: number;
+  person1ExpenseToIncomeRatio: number;
+  person2ExpenseToIncomeRatio: number;
+  settlement: {
+    fromPerson: 'pessoa1' | 'pessoa2' | null;
+    toPerson: 'pessoa1' | 'pessoa2' | null;
+    amount: number;
+  };
 }
 
 export interface CategoryAnalysis {

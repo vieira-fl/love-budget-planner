@@ -8,6 +8,7 @@ import { ExpenseChart } from '@/components/ExpenseChart';
 import { PersonSettings } from '@/components/PersonSettings';
 import { Top10Expenses } from '@/components/Top10Expenses';
 import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
+import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
@@ -30,6 +31,7 @@ const Index = () => {
     top10Expenses,
     monthlyComparison,
     biggestCategoryIncrease,
+    splitCalculation,
   } = useFinance();
 
   const savingsOpportunities = categoryAnalysis.filter((c) => c.status === 'high');
@@ -126,9 +128,10 @@ const Index = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="comparison">Comparativo Mensal</TabsTrigger>
+            <TabsTrigger value="split">Rateio</TabsTrigger>
+            <TabsTrigger value="comparison">Comparativo</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -172,6 +175,14 @@ const Index = () => {
                 person2Name={person2Name}
               />
             </section>
+          </TabsContent>
+
+          <TabsContent value="split">
+            <ExpenseSplitCard
+              splitCalculation={splitCalculation}
+              person1Name={person1Name}
+              person2Name={person2Name}
+            />
           </TabsContent>
 
           <TabsContent value="comparison">
