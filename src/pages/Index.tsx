@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const Index = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [monthOnlyFilter, setMonthOnlyFilter] = useState<number | undefined>();
 
   const {
     transactions,
@@ -44,11 +45,12 @@ const Index = () => {
     splitCalculation,
     incomeByPerson,
     expensesByPerson,
-  } = useFinance({ startDate, endDate });
+  } = useFinance({ startDate, endDate, monthOnly: monthOnlyFilter });
 
   const handleClearFilter = () => {
     setStartDate(undefined);
     setEndDate(undefined);
+    setMonthOnlyFilter(undefined);
   };
 
   const savingsOpportunities = categoryAnalysis.filter((c) => c.status === 'high');
@@ -99,6 +101,8 @@ const Index = () => {
             onStartDateChange={setStartDate}
             onEndDateChange={setEndDate}
             onClearFilter={handleClearFilter}
+            monthOnlyFilter={monthOnlyFilter}
+            onMonthOnlyFilter={setMonthOnlyFilter}
           />
         </section>
 
