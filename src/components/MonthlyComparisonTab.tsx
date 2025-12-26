@@ -1,7 +1,7 @@
 import { MonthlyComparison, CategoryChange } from '@/types/finance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp, AlertTriangle, Calendar } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell, LabelList } from 'recharts';
+import { TrendingUp, TrendingDown, AlertTriangle, Calendar, Minus } from 'lucide-react';
 
 interface MonthlyComparisonTabProps {
   monthlyData: MonthlyComparison[];
@@ -30,28 +30,83 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
     }).format(value);
   };
 
+  const formatPercent = (value: number) => {
+    return `${value.toFixed(1)}%`;
+  };
+
   // Get all unique categories across all months
   const allCategories = Array.from(
     new Set(monthlyData.flatMap(m => Object.keys(m.categories)))
   );
 
-  // Prepare data for the bar chart
-  const chartData = monthlyData.map(month => ({
-    month: month.month,
-    ...month.categories,
-    total: month.total,
-  }));
-
-  // Prepare category totals table data
-  const categoryTotals = allCategories.map(category => {
-    const totals: Record<string, number> = {};
-    monthlyData.forEach(month => {
-      totals[month.month] = month.categories[category] || 0;
+  // Prepare data for the bar chart with percentages
+  const chartData = monthlyData.map(month => {
+    const dataPoint: Record<string, number | string> = {
+      month: month.month,
+      total: month.total,
+    };
+    
+    // Add category values and percentages
+    allCategories.forEach(category => {
+      const value = month.categories[category] || 0;
+      const percentage = month.total > 0 ? (value / month.total) * 100 : 0;
+      dataPoint[category] = value;
+      dataPoint[`${category}_pct`] = percentage;
     });
+    
+    return dataPoint;
+  });
+
+  // Prepare category totals table data with percentages and variations
+  const categoryTotals = allCategories.map(category => {
+    const totals: Record<string, number | string> = {};
+    const percentages: Record<string, number> = {};
+    const variations: Record<string, { value: number; type: 'up' | 'down' | 'same' }> = {};
+    
+    monthlyData.forEach((month, index) => {
+      const value = month.categories[category] || 0;
+      const percentage = month.total > 0 ? (value / month.total) * 100 : 0;
+      totals[month.month] = value;
+      percentages[`${month.month}_pct`] = percentage;
+      
+      // Calculate variation from previous month
+      if (index > 0) {
+        const prevMonth = monthlyData[index - 1];
+        const prevValue = prevMonth.categories[category] || 0;
+        if (prevValue > 0) {
+          const variationPct = ((value - prevValue) / prevValue) * 100;
+          variations[`${month.month}_var`] = {
+            value: variationPct,
+            type: variationPct > 0 ? 'up' : variationPct < 0 ? 'down' : 'same',
+          };
+        } else if (value > 0) {
+          variations[`${month.month}_var`] = { value: 100, type: 'up' };
+        } else {
+          variations[`${month.month}_var`] = { value: 0, type: 'same' };
+        }
+      }
+    });
+    
     return {
       category,
       label: expenseCategoryLabels[category] || category,
       ...totals,
+      ...percentages,
+      ...variations,
+    };
+  });
+
+  // Calculate total percentages per month (should be 100% each)
+  const monthTotalPercentages = monthlyData.map((month, index) => {
+    const prevMonth = index > 0 ? monthlyData[index - 1] : null;
+    const variation = prevMonth && prevMonth.total > 0
+      ? ((month.total - prevMonth.total) / prevMonth.total) * 100
+      : null;
+    
+    return {
+      month: month.month,
+      percentage: 100,
+      variation,
     };
   });
 
@@ -128,10 +183,13 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
                       borderRadius: '8px',
                     }}
                     labelStyle={{ color: 'hsl(var(--foreground))' }}
-                    formatter={(value: number, name: string) => [
-                      formatCurrency(value),
-                      expenseCategoryLabels[name] || name,
-                    ]}
+                    formatter={(value: number, name: string, props: any) => {
+                      const percentage = props.payload[`${name}_pct`];
+                      return [
+                        `${formatCurrency(value)} (${formatPercent(percentage)})`,
+                        expenseCategoryLabels[name] || name,
+                      ];
+                    }}
                   />
                   <Legend 
                     formatter={(value) => expenseCategoryLabels[value] || value}
@@ -153,7 +211,7 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
         </CardContent>
       </Card>
 
-      {/* Category Totals Table */}
+      {/* Category Totals Table with Percentages and Variations */}
       <Card className="bg-card card-shadow">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold text-foreground">
@@ -171,9 +229,10 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left py-3 px-2 font-semibold text-foreground">Categoria</th>
-                    {monthlyData.map(month => (
-                      <th key={month.monthKey} className="text-right py-3 px-2 font-semibold text-foreground">
+                    {monthlyData.map((month, index) => (
+                      <th key={month.monthKey} className="text-right py-3 px-2 font-semibold text-foreground" colSpan={index > 0 ? 2 : 1}>
                         {month.month}
+                        {index > 0 && <span className="text-xs text-muted-foreground ml-1">(Var.)</span>}
                       </th>
                     ))}
                   </tr>
@@ -185,22 +244,84 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
                       className={index % 2 === 0 ? 'bg-muted/30' : ''}
                     >
                       <td className="py-2.5 px-2 font-medium text-foreground">{row.label}</td>
-                      {monthlyData.map(month => (
-                        <td key={month.monthKey} className="text-right py-2.5 px-2 text-muted-foreground">
-                          {(row as Record<string, number | string>)[month.month] 
-                            ? formatCurrency((row as Record<string, number | string>)[month.month] as number)
-                            : '-'}
-                        </td>
-                      ))}
+                      {monthlyData.map((month, monthIndex) => {
+                        const value = (row as unknown as Record<string, number | string>)[month.month] as number;
+                        const percentage = (row as unknown as Record<string, number>)[`${month.month}_pct`];
+                        const variation = (row as unknown as Record<string, { value: number; type: string }>)[`${month.month}_var`];
+                        
+                        return (
+                          <>
+                            <td key={`${month.monthKey}-value`} className="text-right py-2.5 px-2 text-muted-foreground">
+                              {value ? (
+                                <div className="flex flex-col items-end">
+                                  <span>{formatCurrency(value)}</span>
+                                  <span className="text-xs text-muted-foreground/70">
+                                    {formatPercent(percentage)}
+                                  </span>
+                                </div>
+                              ) : '-'}
+                            </td>
+                            {monthIndex > 0 && (
+                              <td key={`${month.monthKey}-var`} className="text-right py-2.5 px-1">
+                                {variation ? (
+                                  <span className={`inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded ${
+                                    variation.type === 'up' 
+                                      ? 'text-expense bg-expense/10' 
+                                      : variation.type === 'down' 
+                                        ? 'text-income bg-income/10' 
+                                        : 'text-muted-foreground'
+                                  }`}>
+                                    {variation.type === 'up' && <TrendingUp className="h-3 w-3" />}
+                                    {variation.type === 'down' && <TrendingDown className="h-3 w-3" />}
+                                    {variation.type === 'same' && <Minus className="h-3 w-3" />}
+                                    {variation.value !== 0 ? `${variation.value > 0 ? '+' : ''}${variation.value.toFixed(0)}%` : '0%'}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">-</span>
+                                )}
+                              </td>
+                            )}
+                          </>
+                        );
+                      })}
                     </tr>
                   ))}
                   <tr className="border-t border-border font-semibold">
                     <td className="py-2.5 px-2 text-foreground">Total</td>
-                    {monthlyData.map(month => (
-                      <td key={month.monthKey} className="text-right py-2.5 px-2 text-expense">
-                        {formatCurrency(month.total)}
-                      </td>
-                    ))}
+                    {monthlyData.map((month, monthIndex) => {
+                      const totalVar = monthTotalPercentages[monthIndex];
+                      
+                      return (
+                        <>
+                          <td key={`${month.monthKey}-total`} className="text-right py-2.5 px-2 text-expense">
+                            <div className="flex flex-col items-end">
+                              <span>{formatCurrency(month.total)}</span>
+                              <span className="text-xs text-muted-foreground/70">100%</span>
+                            </div>
+                          </td>
+                          {monthIndex > 0 && (
+                            <td key={`${month.monthKey}-total-var`} className="text-right py-2.5 px-1">
+                              {totalVar.variation !== null ? (
+                                <span className={`inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded ${
+                                  totalVar.variation > 0 
+                                    ? 'text-expense bg-expense/10' 
+                                    : totalVar.variation < 0 
+                                      ? 'text-income bg-income/10' 
+                                      : 'text-muted-foreground'
+                                }`}>
+                                  {totalVar.variation > 0 && <TrendingUp className="h-3 w-3" />}
+                                  {totalVar.variation < 0 && <TrendingDown className="h-3 w-3" />}
+                                  {totalVar.variation === 0 && <Minus className="h-3 w-3" />}
+                                  {totalVar.variation > 0 ? '+' : ''}{totalVar.variation.toFixed(0)}%
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">-</span>
+                              )}
+                            </td>
+                          )}
+                        </>
+                      );
+                    })}
                   </tr>
                 </tbody>
               </table>

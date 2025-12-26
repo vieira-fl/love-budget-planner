@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter, addQuarters } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,7 @@ interface PeriodFilterProps {
 }
 
 const months = [
+  { value: 'none', label: 'Todos os meses' },
   { value: '0', label: 'Janeiro' },
   { value: '1', label: 'Fevereiro' },
   { value: '2', label: 'Março' },
@@ -48,6 +49,13 @@ const years = Array.from({ length: 5 }, (_, i) => ({
   label: String(currentYear - i),
 }));
 
+const quarters = [
+  { value: 'Q1', label: '1º Trimestre (Jan-Mar)' },
+  { value: 'Q2', label: '2º Trimestre (Abr-Jun)' },
+  { value: 'Q3', label: '3º Trimestre (Jul-Set)' },
+  { value: 'Q4', label: '4º Trimestre (Out-Dez)' },
+];
+
 export function PeriodFilter({
   startDate,
   endDate,
@@ -57,21 +65,47 @@ export function PeriodFilter({
 }: PeriodFilterProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('');
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('');
 
   const handleMonthYearSelect = () => {
-    if (selectedMonth && selectedYear) {
-      const month = parseInt(selectedMonth);
+    if (selectedYear) {
       const year = parseInt(selectedYear);
-      const start = startOfMonth(new Date(year, month));
-      const end = endOfMonth(new Date(year, month));
+      
+      if (selectedMonth && selectedMonth !== 'none') {
+        // Specific month selected
+        const month = parseInt(selectedMonth);
+        const start = startOfMonth(new Date(year, month));
+        const end = endOfMonth(new Date(year, month));
+        onStartDateChange(start);
+        onEndDateChange(end);
+      } else {
+        // Only year selected (all months)
+        const start = startOfYear(new Date(year, 0));
+        const end = endOfYear(new Date(year, 0));
+        onStartDateChange(start);
+        onEndDateChange(end);
+      }
+      setSelectedQuarter('');
+    }
+  };
+
+  const handleQuarterSelect = () => {
+    if (selectedQuarter && selectedYear) {
+      const year = parseInt(selectedYear);
+      const quarterNum = parseInt(selectedQuarter.replace('Q', '')) - 1;
+      const baseDate = new Date(year, quarterNum * 3);
+      const start = startOfQuarter(baseDate);
+      const end = endOfQuarter(baseDate);
       onStartDateChange(start);
       onEndDateChange(end);
+      setSelectedMonth('');
     }
   };
 
   const handleClear = () => {
     setSelectedMonth('');
     setSelectedYear('');
+    setSelectedQuarter('');
     onClearFilter();
   };
 
@@ -98,42 +132,71 @@ export function PeriodFilter({
       </div>
 
       {/* Month/Year Quick Select */}
-      <div className="flex flex-wrap gap-2">
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Mês" />
-          </SelectTrigger>
-          <SelectContent>
-            {months.map((month) => (
-              <SelectItem key={month.value} value={month.value}>
-                {month.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <Select value={selectedYear} onValueChange={(val) => { setSelectedYear(val); setSelectedQuarter(''); }}>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder="Ano" />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((year) => (
+                <SelectItem key={year.value} value={year.value}>
+                  {year.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder="Ano" />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map((year) => (
-              <SelectItem key={year.value} value={year.value}>
-                {year.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={selectedMonth} onValueChange={(val) => { setSelectedMonth(val); setSelectedQuarter(''); }}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Mês" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleMonthYearSelect}
-          disabled={!selectedMonth || !selectedYear}
-          className="h-10"
-        >
-          Aplicar
-        </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleMonthYearSelect}
+            disabled={!selectedYear}
+            className="h-10"
+          >
+            Aplicar
+          </Button>
+        </div>
+
+        {/* Quarterly Select */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs text-muted-foreground">Ou por trimestre:</span>
+          <Select value={selectedQuarter} onValueChange={(val) => { setSelectedQuarter(val); setSelectedMonth(''); }}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Selecione o trimestre" />
+            </SelectTrigger>
+            <SelectContent>
+              {quarters.map((quarter) => (
+                <SelectItem key={quarter.value} value={quarter.value}>
+                  {quarter.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleQuarterSelect}
+            disabled={!selectedQuarter || !selectedYear}
+            className="h-10"
+          >
+            Aplicar
+          </Button>
+        </div>
       </div>
 
       {/* Date Range Picker */}
