@@ -69,13 +69,17 @@ export function AddTransactionDialog({
     
     if (!description || !amount || !category) return;
 
+    // Parse date string in local timezone to avoid UTC offset issues
+    const [year, month, day] = date.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day);
+
     const baseTransaction: Omit<Transaction, 'id'> = {
       type,
       category,
       description,
       amount: parseFloat(amount),
       person,
-      date: new Date(date),
+      date: parsedDate,
       recurrence,
       includeInSplit: type === 'expense' ? includeInSplit : false,
     };
