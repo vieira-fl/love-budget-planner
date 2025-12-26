@@ -9,7 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType } from '@/types/finance';
 import { Plus, PlusCircle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { addMonths } from 'date-fns';
 
 interface AddTransactionDialogProps {
   onAdd: (transaction: Omit<Transaction, 'id'>) => void;
@@ -64,14 +63,18 @@ export function AddTransactionDialog({
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
   const [multiMonthYear, setMultiMonthYear] = useState(new Date().getFullYear());
 
+  const parseLocalDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, (m ?? 1) - 1, d ?? 1);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!description || !amount || !category) return;
 
     // Parse date string in local timezone to avoid UTC offset issues
-    const [year, month, day] = date.split('-').map(Number);
-    const parsedDate = new Date(year, month - 1, day);
+    const parsedDate = parseLocalDate(date);
 
     const baseTransaction: Omit<Transaction, 'id'> = {
       type,
@@ -86,23 +89,22 @@ export function AddTransactionDialog({
 
     if (enableMultiMonth && selectedMonths.length > 0 && onAddMultiple) {
       // Create transactions for each selected month
-      const selectedDate = new Date(date);
-      const dayOfMonth = selectedDate.getDate();
-      
-      const transactions: Omit<Transaction, 'id'>[] = selectedMonths.map(month => {
+      const dayOfMonth = parsedDate.getDate();
+
+      const transactions: Omit<Transaction, 'id'>[] = selectedMonths.map((month) => {
         // Get the last day of the target month
         const targetDate = new Date(multiMonthYear, month + 1, 0);
         const lastDayOfMonth = targetDate.getDate();
-        
+
         // Use the minimum of the original day and the last day of the month
         const adjustedDay = Math.min(dayOfMonth, lastDayOfMonth);
-        
+
         return {
           ...baseTransaction,
           date: new Date(multiMonthYear, month, adjustedDay),
         };
       });
-      
+
       onAddMultiple(transactions);
     } else {
       onAdd(baseTransaction);
@@ -402,8 +404,9 @@ export function AddTransactionDialog({
                 
                 {selectedMonths.length > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    {selectedMonths.length} {selectedMonths.length === 1 ? 'mês selecionado' : 'meses selecionados'}. 
-                    A transação será criada no dia {new Date(date).getDate()} de cada mês.
+                    {selectedMonths.length}{' '}
+                    {selectedMonths.length === 1 ? 'mês selecionado' : 'meses selecionados'}. A transação será criada
+                    no dia {parseLocalDate(date).getDate()} de cada mês.
                   </p>
                 )}
               </div>
