@@ -1,6 +1,6 @@
-import { Transaction, expenseCategoryLabels, incomeCategoryLabels } from '@/types/finance';
+import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels } from '@/types/finance';
 import { cn } from '@/lib/utils';
-import { Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, Repeat, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface TransactionListProps {
@@ -27,9 +27,9 @@ export function TransactionList({ transactions, onDelete, person1Name, person2Na
 
   const getCategoryLabel = (transaction: Transaction) => {
     if (transaction.type === 'income') {
-      return incomeCategoryLabels[transaction.category as keyof typeof incomeCategoryLabels];
+      return defaultIncomeCategoryLabels[transaction.category] || transaction.category;
     }
-    return expenseCategoryLabels[transaction.category as keyof typeof expenseCategoryLabels];
+    return defaultExpenseCategoryLabels[transaction.category] || transaction.category;
   };
 
   const sortedTransactions = [...transactions].sort(
@@ -62,7 +62,14 @@ export function TransactionList({ transactions, onDelete, person1Name, person2Na
                 )}
               </div>
               <div>
-                <p className="font-medium text-foreground">{transaction.description}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-foreground">{transaction.description}</p>
+                  {transaction.recurrence === 'recorrente' ? (
+                    <Repeat className="h-3.5 w-3.5 text-primary" />
+                  ) : (
+                    <Zap className="h-3.5 w-3.5 text-warning" />
+                  )}
+                </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs text-muted-foreground">
                     {getCategoryLabel(transaction)}
@@ -70,6 +77,13 @@ export function TransactionList({ transactions, onDelete, person1Name, person2Na
                   <span className="text-xs text-muted-foreground">•</span>
                   <span className="text-xs text-muted-foreground">
                     {transaction.person === 'pessoa1' ? person1Name : person2Name}
+                  </span>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className={cn(
+                    'text-xs',
+                    transaction.recurrence === 'recorrente' ? 'text-primary' : 'text-warning'
+                  )}>
+                    {transaction.recurrence === 'recorrente' ? 'Recorrente' : 'Pontual'}
                   </span>
                 </div>
               </div>

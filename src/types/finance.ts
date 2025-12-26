@@ -10,13 +10,17 @@ export type ExpenseCategory =
   | 'streaming'
   | 'vestuario'
   | 'pets'
-  | 'outros';
+  | 'outros'
+  | string; // Allow custom categories
 
 export type IncomeCategory = 
   | 'salario'
   | 'freelance'
   | 'investimentos'
-  | 'outros';
+  | 'outros'
+  | string; // Allow custom categories
+
+export type RecurrenceType = 'pontual' | 'recorrente';
 
 export interface Transaction {
   id: string;
@@ -26,6 +30,7 @@ export interface Transaction {
   amount: number;
   person: 'pessoa1' | 'pessoa2';
   date: Date;
+  recurrence: RecurrenceType;
 }
 
 export interface CategoryAnalysis {
@@ -36,7 +41,25 @@ export interface CategoryAnalysis {
   status: 'low' | 'medium' | 'high';
 }
 
-export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
+export interface MonthlyComparison {
+  month: string;
+  monthKey: string;
+  categories: Record<string, number>;
+  total: number;
+}
+
+export interface CategoryChange {
+  category: string;
+  label: string;
+  previousMonth: string;
+  currentMonth: string;
+  previousValue: number;
+  currentValue: number;
+  change: number;
+  changePercentage: number;
+}
+
+export const defaultExpenseCategoryLabels: Record<string, string> = {
   moradia: 'Moradia',
   alimentacao: 'Alimentação',
   transporte: 'Transporte',
@@ -49,14 +72,14 @@ export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
   outros: 'Outros',
 };
 
-export const incomeCategoryLabels: Record<IncomeCategory, string> = {
+export const defaultIncomeCategoryLabels: Record<string, string> = {
   salario: 'Salário',
   freelance: 'Freelance',
   investimentos: 'Investimentos',
   outros: 'Outros',
 };
 
-export const categoryThresholds: Record<ExpenseCategory, { medium: number; high: number }> = {
+export const categoryThresholds: Record<string, { medium: number; high: number }> = {
   moradia: { medium: 30, high: 40 },
   alimentacao: { medium: 20, high: 30 },
   transporte: { medium: 15, high: 20 },
@@ -68,3 +91,6 @@ export const categoryThresholds: Record<ExpenseCategory, { medium: number; high:
   pets: { medium: 5, high: 8 },
   outros: { medium: 10, high: 15 },
 };
+
+// Default thresholds for custom categories
+export const defaultThreshold = { medium: 8, high: 12 };
