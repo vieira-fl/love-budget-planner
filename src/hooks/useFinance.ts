@@ -385,18 +385,38 @@ export function useFinance(periodFilter?: PeriodFilter) {
   }, [filteredTransactions]);
 
   const monthlyComparison = useMemo((): MonthlyComparison[] => {
-    const now = new Date();
-    const months: MonthlyComparison[] = [];
+    // Get unique months from all transactions (not just filtered)
+    const expenseTransactions = transactions.filter(t => t.type === 'expense');
+    
+    if (expenseTransactions.length === 0) {
+      return [];
+    }
 
-    for (let i = 5; i >= 0; i--) {
-      const monthDate = subMonths(now, i);
-      const monthStart = startOfMonth(monthDate);
-      const monthEnd = endOfMonth(monthDate);
-      const monthKey = format(monthDate, 'yyyy-MM');
-      const monthLabel = format(monthDate, 'MMM/yy', { locale: ptBR });
+    // Find all unique year-months from transactions
+    const uniqueMonths = new Map<string, { date: Date; label: string }>();
+    
+    expenseTransactions.forEach(t => {
+      const date = new Date(t.date);
+      const monthKey = format(date, 'yyyy-MM');
+      if (!uniqueMonths.has(monthKey)) {
+        uniqueMonths.set(monthKey, {
+          date: date,
+          label: format(date, 'MMM/yy', { locale: ptBR }),
+        });
+      }
+    });
 
-      const monthTransactions = transactions.filter(
-        t => t.type === 'expense' && isWithinInterval(new Date(t.date), { start: monthStart, end: monthEnd })
+    // Sort months chronologically and take last 6
+    const sortedMonths = Array.from(uniqueMonths.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-6);
+
+    const months: MonthlyComparison[] = sortedMonths.map(([monthKey, { date, label }]) => {
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+
+      const monthTransactions = expenseTransactions.filter(
+        t => isWithinInterval(new Date(t.date), { start: monthStart, end: monthEnd })
       );
 
       const categories: Record<string, number> = {};
@@ -407,13 +427,13 @@ export function useFinance(periodFilter?: PeriodFilter) {
         total += t.amount;
       });
 
-      months.push({
-        month: monthLabel,
+      return {
+        month: label,
         monthKey,
         categories,
         total,
-      });
-    }
+      };
+    });
 
     return months;
   }, [transactions]);
