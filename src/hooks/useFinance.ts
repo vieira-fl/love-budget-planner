@@ -571,6 +571,18 @@ export function useFinance(periodFilter?: PeriodFilter) {
     setTransactions(prev => [...prev, newTransaction]);
   };
 
+  const addMultipleTransactions = (transactions: Omit<Transaction, 'id'>[]) => {
+    const newTransactions: Transaction[] = transactions.map((t, index) => ({
+      ...t,
+      id: (Date.now() + index).toString(),
+    }));
+    setTransactions(prev => [...prev, ...newTransactions]);
+  };
+
+  const updateTransaction = (transaction: Transaction) => {
+    setTransactions(prev => prev.map(t => t.id === transaction.id ? transaction : t));
+  };
+
   const deleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
   };
@@ -583,6 +595,8 @@ export function useFinance(periodFilter?: PeriodFilter) {
     balance,
     categoryAnalysis,
     addTransaction,
+    addMultipleTransactions,
+    updateTransaction,
     deleteTransaction,
     person1Name,
     person2Name,

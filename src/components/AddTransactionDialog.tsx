@@ -5,12 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType } from '@/types/finance';
-import { Plus, PlusCircle } from 'lucide-react';
+import { Plus, PlusCircle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { addMonths } from 'date-fns';
 
 interface AddTransactionDialogProps {
   onAdd: (transaction: Omit<Transaction, 'id'>) => void;
+  onAddMultiple?: (transactions: Omit<Transaction, 'id'>[]) => void;
   person1Name: string;
   person2Name: string;
   expenseCategoryLabels: Record<string, string>;
@@ -19,8 +22,24 @@ interface AddTransactionDialogProps {
   onAddIncomeCategory: (key: string, label: string) => void;
 }
 
+const monthLabels = [
+  { value: 0, label: 'Janeiro' },
+  { value: 1, label: 'Fevereiro' },
+  { value: 2, label: 'Março' },
+  { value: 3, label: 'Abril' },
+  { value: 4, label: 'Maio' },
+  { value: 5, label: 'Junho' },
+  { value: 6, label: 'Julho' },
+  { value: 7, label: 'Agosto' },
+  { value: 8, label: 'Setembro' },
+  { value: 9, label: 'Outubro' },
+  { value: 10, label: 'Novembro' },
+  { value: 11, label: 'Dezembro' },
+];
+
 export function AddTransactionDialog({ 
-  onAdd, 
+  onAdd,
+  onAddMultiple,
   person1Name, 
   person2Name,
   expenseCategoryLabels,
@@ -39,13 +58,18 @@ export function AddTransactionDialog({
   const [includeInSplit, setIncludeInSplit] = useState(true);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  
+  // Multi-month functionality
+  const [enableMultiMonth, setEnableMultiMonth] = useState(false);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+  const [multiMonthYear, setMultiMonthYear] = useState(new Date().getFullYear());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!description || !amount || !category) return;
 
-    onAdd({
+    const baseTransaction: Omit<Transaction, 'id'> = {
       type,
       category,
       description,
@@ -54,15 +78,45 @@ export function AddTransactionDialog({
       date: new Date(date),
       recurrence,
       includeInSplit: type === 'expense' ? includeInSplit : false,
-    });
+    };
+
+    if (enableMultiMonth && selectedMonths.length > 0 && onAddMultiple) {
+      // Create transactions for each selected month
+      const selectedDate = new Date(date);
+      const dayOfMonth = selectedDate.getDate();
+      
+      const transactions: Omit<Transaction, 'id'>[] = selectedMonths.map(month => {
+        // Get the last day of the target month
+        const targetDate = new Date(multiMonthYear, month + 1, 0);
+        const lastDayOfMonth = targetDate.getDate();
+        
+        // Use the minimum of the original day and the last day of the month
+        const adjustedDay = Math.min(dayOfMonth, lastDayOfMonth);
+        
+        return {
+          ...baseTransaction,
+          date: new Date(multiMonthYear, month, adjustedDay),
+        };
+      });
+      
+      onAddMultiple(transactions);
+    } else {
+      onAdd(baseTransaction);
+    }
 
     // Reset form
+    resetForm();
+    setOpen(false);
+  };
+
+  const resetForm = () => {
     setDescription('');
     setAmount('');
     setCategory('outros');
     setRecurrence('pontual');
     setIncludeInSplit(true);
-    setOpen(false);
+    setEnableMultiMonth(false);
+    setSelectedMonths([]);
   };
 
   const handleAddNewCategory = () => {
@@ -81,8 +135,27 @@ export function AddTransactionDialog({
     setShowNewCategory(false);
   };
 
+  const toggleMonth = (month: number) => {
+    setSelectedMonths(prev => 
+      prev.includes(month) 
+        ? prev.filter(m => m !== month)
+        : [...prev, month].sort((a, b) => a - b)
+    );
+  };
+
+  const selectAllMonths = () => {
+    setSelectedMonths([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  };
+
+  const clearAllMonths = () => {
+    setSelectedMonths([]);
+  };
+
   const expenseCategories = Object.entries(expenseCategoryLabels);
   const incomeCategories = Object.entries(incomeCategoryLabels);
+
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 1, currentYear, currentYear + 1];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -92,7 +165,7 @@ export function AddTransactionDialog({
           Nova Transação
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-card max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] bg-card max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Adicionar Transação</DialogTitle>
         </DialogHeader>
@@ -244,6 +317,95 @@ export function AddTransactionDialog({
             />
           </div>
 
+          {/* Multi-month option */}
+          <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                <Label htmlFor="multi-month" className="text-foreground text-sm font-medium cursor-pointer">
+                  Replicar em múltiplos meses
+                </Label>
+              </div>
+              <Switch
+                id="multi-month"
+                checked={enableMultiMonth}
+                onCheckedChange={setEnableMultiMonth}
+              />
+            </div>
+            
+            {enableMultiMonth && (
+              <div className="space-y-3 pt-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <Label className="text-foreground text-sm">Ano</Label>
+                  <Select value={multiMonthYear.toString()} onValueChange={(value) => setMultiMonthYear(parseInt(value))}>
+                    <SelectTrigger className="w-24 bg-background border-input h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map(year => (
+                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Label className="text-foreground text-sm">Selecione os meses</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={selectAllMonths}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Todos
+                    </button>
+                    <span className="text-muted-foreground">|</span>
+                    <button
+                      type="button"
+                      onClick={clearAllMonths}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Limpar
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {monthLabels.map(({ value, label }) => (
+                    <label
+                      key={value}
+                      className={cn(
+                        'flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors text-sm',
+                        selectedMonths.includes(value) 
+                          ? 'bg-primary/10 border border-primary/30' 
+                          : 'bg-background hover:bg-muted border border-transparent'
+                      )}
+                    >
+                      <Checkbox
+                        checked={selectedMonths.includes(value)}
+                        onCheckedChange={() => toggleMonth(value)}
+                        className="h-4 w-4"
+                      />
+                      <span className={cn(
+                        'text-xs',
+                        selectedMonths.includes(value) ? 'text-primary font-medium' : 'text-foreground'
+                      )}>
+                        {label.slice(0, 3)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                
+                {selectedMonths.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {selectedMonths.length} {selectedMonths.length === 1 ? 'mês selecionado' : 'meses selecionados'}. 
+                    A transação será criada no dia {new Date(date).getDate()} de cada mês.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
           {type === 'expense' && (
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div className="space-y-0.5">
@@ -263,7 +425,10 @@ export function AddTransactionDialog({
           )}
 
           <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground">
-            Adicionar
+            {enableMultiMonth && selectedMonths.length > 1 
+              ? `Adicionar ${selectedMonths.length} transações`
+              : 'Adicionar'
+            }
           </Button>
         </form>
       </DialogContent>
