@@ -6,6 +6,9 @@ import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { ExpenseChart } from '@/components/ExpenseChart';
 import { PersonSettings } from '@/components/PersonSettings';
+import { Top10Expenses } from '@/components/Top10Expenses';
+import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
   const {
@@ -20,6 +23,13 @@ const Index = () => {
     person2Name,
     setPerson1Name,
     setPerson2Name,
+    expenseCategoryLabels,
+    incomeCategoryLabels,
+    addExpenseCategory,
+    addIncomeCategory,
+    top10Expenses,
+    monthlyComparison,
+    biggestCategoryIncrease,
   } = useFinance();
 
   const savingsOpportunities = categoryAnalysis.filter((c) => c.status === 'high');
@@ -50,6 +60,10 @@ const Index = () => {
                 onAdd={addTransaction}
                 person1Name={person1Name}
                 person2Name={person2Name}
+                expenseCategoryLabels={expenseCategoryLabels}
+                incomeCategoryLabels={incomeCategoryLabels}
+                onAddExpenseCategory={addExpenseCategory}
+                onAddIncomeCategory={addIncomeCategory}
               />
             </div>
           </div>
@@ -110,43 +124,71 @@ const Index = () => {
           </section>
         )}
 
-        {/* Charts and Analysis */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ExpenseChart data={categoryAnalysis} />
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Análise por Categoria</h2>
-            <div className="grid gap-4 max-h-[340px] overflow-y-auto pr-2">
-              {categoryAnalysis.length > 0 ? (
-                categoryAnalysis.map((analysis, index) => (
-                  <CategoryAnalysisCard key={analysis.category} analysis={analysis} index={index} />
-                ))
-              ) : (
-                <div className="bg-card rounded-xl p-6 card-shadow text-center">
-                  <p className="text-muted-foreground">
-                    Adicione despesas para ver a análise por categoria
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="comparison">Comparativo Mensal</TabsTrigger>
+          </TabsList>
 
-        {/* Transactions */}
-        <section>
-          <TransactionList
-            transactions={transactions}
-            onDelete={deleteTransaction}
-            person1Name={person1Name}
-            person2Name={person2Name}
-          />
-        </section>
+          <TabsContent value="overview" className="space-y-6">
+            {/* Charts and Analysis */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ExpenseChart data={categoryAnalysis} />
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-foreground">Análise por Categoria</h2>
+                <div className="grid gap-4 max-h-[340px] overflow-y-auto pr-2">
+                  {categoryAnalysis.length > 0 ? (
+                    categoryAnalysis.map((analysis, index) => (
+                      <CategoryAnalysisCard key={analysis.category} analysis={analysis} index={index} />
+                    ))
+                  ) : (
+                    <div className="bg-card rounded-xl p-6 card-shadow text-center">
+                      <p className="text-muted-foreground">
+                        Adicione despesas para ver a análise por categoria
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Top 10 Expenses */}
+            <section>
+              <Top10Expenses
+                expenses={top10Expenses}
+                expenseCategoryLabels={expenseCategoryLabels}
+                person1Name={person1Name}
+                person2Name={person2Name}
+              />
+            </section>
+
+            {/* Transactions */}
+            <section>
+              <TransactionList
+                transactions={transactions}
+                onDelete={deleteTransaction}
+                person1Name={person1Name}
+                person2Name={person2Name}
+              />
+            </section>
+          </TabsContent>
+
+          <TabsContent value="comparison">
+            <MonthlyComparisonTab
+              monthlyData={monthlyComparison}
+              biggestIncrease={biggestCategoryIncrease}
+              expenseCategoryLabels={expenseCategoryLabels}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Footer */}
       <footer className="border-t border-border mt-12">
         <div className="container mx-auto px-4 py-6">
           <p className="text-center text-sm text-muted-foreground">
-            Controle suas finanças juntos e alcancem seus objetivos 💚
+            Controle suas finanças juntos e alcancem seus objetivos
           </p>
         </div>
       </footer>

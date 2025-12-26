@@ -4,17 +4,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, expenseCategoryLabels, incomeCategoryLabels } from '@/types/finance';
-import { Plus } from 'lucide-react';
+import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType } from '@/types/finance';
+import { Plus, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AddTransactionDialogProps {
   onAdd: (transaction: Omit<Transaction, 'id'>) => void;
   person1Name: string;
   person2Name: string;
+  expenseCategoryLabels: Record<string, string>;
+  incomeCategoryLabels: Record<string, string>;
+  onAddExpenseCategory: (key: string, label: string) => void;
+  onAddIncomeCategory: (key: string, label: string) => void;
 }
 
-export function AddTransactionDialog({ onAdd, person1Name, person2Name }: AddTransactionDialogProps) {
+export function AddTransactionDialog({ 
+  onAdd, 
+  person1Name, 
+  person2Name,
+  expenseCategoryLabels,
+  incomeCategoryLabels,
+  onAddExpenseCategory,
+  onAddIncomeCategory,
+}: AddTransactionDialogProps) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState<ExpenseCategory | IncomeCategory>('outros');
@@ -22,6 +34,9 @@ export function AddTransactionDialog({ onAdd, person1Name, person2Name }: AddTra
   const [amount, setAmount] = useState('');
   const [person, setPerson] = useState<'pessoa1' | 'pessoa2'>('pessoa1');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [recurrence, setRecurrence] = useState<RecurrenceType>('pontual');
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,13 +50,31 @@ export function AddTransactionDialog({ onAdd, person1Name, person2Name }: AddTra
       amount: parseFloat(amount),
       person,
       date: new Date(date),
+      recurrence,
     });
 
     // Reset form
     setDescription('');
     setAmount('');
     setCategory('outros');
+    setRecurrence('pontual');
     setOpen(false);
+  };
+
+  const handleAddNewCategory = () => {
+    if (!newCategoryName.trim()) return;
+    
+    const key = newCategoryName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_');
+    
+    if (type === 'expense') {
+      onAddExpenseCategory(key, newCategoryName);
+    } else {
+      onAddIncomeCategory(key, newCategoryName);
+    }
+    
+    setCategory(key);
+    setNewCategoryName('');
+    setShowNewCategory(false);
   };
 
   const expenseCategories = Object.entries(expenseCategoryLabels);
@@ -55,7 +88,7 @@ export function AddTransactionDialog({ onAdd, person1Name, person2Name }: AddTra
           Nova Transação
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-card">
+      <DialogContent className="sm:max-w-[425px] bg-card max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Adicionar Transação</DialogTitle>
         </DialogHeader>
@@ -120,9 +153,32 @@ export function AddTransactionDialog({ onAdd, person1Name, person2Name }: AddTra
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
               <Label className="text-foreground">Categoria</Label>
+              <button
+                type="button"
+                onClick={() => setShowNewCategory(!showNewCategory)}
+                className="text-xs text-primary flex items-center gap-1 hover:underline"
+              >
+                <PlusCircle className="h-3 w-3" />
+                Nova categoria
+              </button>
+            </div>
+            
+            {showNewCategory ? (
+              <div className="flex gap-2">
+                <Input
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Nome da categoria"
+                  className="bg-background border-input flex-1"
+                />
+                <Button type="button" size="sm" onClick={handleAddNewCategory}>
+                  Adicionar
+                </Button>
+              </div>
+            ) : (
               <Select value={category} onValueChange={(value) => setCategory(value as ExpenseCategory | IncomeCategory)}>
                 <SelectTrigger className="bg-background border-input">
                   <SelectValue />
@@ -141,8 +197,10 @@ export function AddTransactionDialog({ onAdd, person1Name, person2Name }: AddTra
                       ))}
                 </SelectContent>
               </Select>
-            </div>
+            )}
+          </div>
 
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-foreground">Pessoa</Label>
               <Select value={person} onValueChange={(value) => setPerson(value as 'pessoa1' | 'pessoa2')}>
@@ -152,6 +210,19 @@ export function AddTransactionDialog({ onAdd, person1Name, person2Name }: AddTra
                 <SelectContent>
                   <SelectItem value="pessoa1">{person1Name}</SelectItem>
                   <SelectItem value="pessoa2">{person2Name}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-foreground">Tipo</Label>
+              <Select value={recurrence} onValueChange={(value) => setRecurrence(value as RecurrenceType)}>
+                <SelectTrigger className="bg-background border-input">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pontual">Pontual</SelectItem>
+                  <SelectItem value="recorrente">Recorrente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
