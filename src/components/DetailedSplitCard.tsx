@@ -1,8 +1,10 @@
+import { useState, useMemo } from 'react';
 import { Transaction, SplitCalculation } from '@/types/finance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileSpreadsheet, CheckCircle2, XCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileSpreadsheet, CheckCircle2, XCircle, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -22,6 +24,9 @@ export function DetailedSplitCard({
   person2Name,
   expenseCategoryLabels,
 }: DetailedSplitCardProps) {
+  const [personFilter, setPersonFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -33,25 +38,81 @@ export function DetailedSplitCard({
   const sharedExpenses = expenses.filter(t => t.includeInSplit);
   const personalExpenses = expenses.filter(t => !t.includeInSplit);
 
+  // Get unique categories from shared expenses
+  const uniqueCategories = useMemo(() => {
+    const categories = new Set(sharedExpenses.map(t => t.category));
+    return Array.from(categories).sort();
+  }, [sharedExpenses]);
+
+  // Filter shared expenses
+  const filteredSharedExpenses = useMemo(() => {
+    return sharedExpenses.filter(expense => {
+      const matchesPerson = personFilter === 'all' || expense.person === personFilter;
+      const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
+      return matchesPerson && matchesCategory;
+    });
+  }, [sharedExpenses, personFilter, categoryFilter]);
+
+  // Calculate filtered totals
+  const filteredTotals = useMemo(() => {
+    const total = filteredSharedExpenses.reduce((sum, t) => sum + t.amount, 0);
+    const person1Share = (splitCalculation.person1IncomePercentage / 100) * total;
+    const person2Share = (splitCalculation.person2IncomePercentage / 100) * total;
+    return { total, person1Share, person2Share };
+  }, [filteredSharedExpenses, splitCalculation]);
+
   const getPersonName = (person: 'pessoa1' | 'pessoa2') => {
     return person === 'pessoa1' ? person1Name : person2Name;
   };
+
+  const hasActiveFilters = personFilter !== 'all' || categoryFilter !== 'all';
 
   return (
     <div className="space-y-6">
       {/* Shared Expenses Table */}
       <Card className="bg-card card-shadow">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-primary" />
-            Despesas no Rateio
-            <Badge variant="secondary" className="ml-2">
-              {sharedExpenses.length} itens
-            </Badge>
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+              Despesas no Rateio
+              <Badge variant="secondary" className="ml-2">
+                {filteredSharedExpenses.length} {hasActiveFilters ? `de ${sharedExpenses.length}` : ''} itens
+              </Badge>
+            </CardTitle>
+            
+            {/* Filters */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={personFilter} onValueChange={setPersonFilter}>
+                <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectValue placeholder="Pessoa" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas pessoas</SelectItem>
+                  <SelectItem value="pessoa1">{person1Name}</SelectItem>
+                  <SelectItem value="pessoa2">{person2Name}</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[150px] h-8 text-xs">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas categorias</SelectItem>
+                  {uniqueCategories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {expenseCategoryLabels[category] || category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {sharedExpenses.length > 0 ? (
+          {filteredSharedExpenses.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -66,7 +127,7 @@ export function DetailedSplitCard({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sharedExpenses.map((expense) => {
+                  {filteredSharedExpenses.map((expense) => {
                     const person1Share = (splitCalculation.person1IncomePercentage / 100) * expense.amount;
                     const person2Share = (splitCalculation.person2IncomePercentage / 100) * expense.amount;
                     
@@ -102,15 +163,17 @@ export function DetailedSplitCard({
                     );
                   })}
                   <TableRow className="bg-muted/50 font-semibold">
-                    <TableCell colSpan={4}>Total no Rateio</TableCell>
+                    <TableCell colSpan={4}>
+                      Total {hasActiveFilters ? '(filtrado)' : 'no Rateio'}
+                    </TableCell>
                     <TableCell className="text-right">
-                      {formatCurrency(splitCalculation.totalSharedExpenses)}
+                      {formatCurrency(filteredTotals.total)}
                     </TableCell>
                     <TableCell className="text-right text-primary">
-                      {formatCurrency(splitCalculation.person1IdealShare)}
+                      {formatCurrency(filteredTotals.person1Share)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {formatCurrency(splitCalculation.person2IdealShare)}
+                      {formatCurrency(filteredTotals.person2Share)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -119,7 +182,7 @@ export function DetailedSplitCard({
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <CheckCircle2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Nenhuma despesa marcada para rateio</p>
+              <p>{hasActiveFilters ? 'Nenhuma despesa encontrada com os filtros selecionados' : 'Nenhuma despesa marcada para rateio'}</p>
             </div>
           )}
         </CardContent>
