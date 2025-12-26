@@ -9,6 +9,8 @@ import { PersonSettings } from '@/components/PersonSettings';
 import { Top10Expenses } from '@/components/Top10Expenses';
 import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
 import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
+import { PersonSummaryCard } from '@/components/PersonSummaryCard';
+import { DetailedSplitCard } from '@/components/DetailedSplitCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
@@ -32,6 +34,8 @@ const Index = () => {
     monthlyComparison,
     biggestCategoryIncrease,
     splitCalculation,
+    incomeByPerson,
+    expensesByPerson,
   } = useFinance();
 
   const savingsOpportunities = categoryAnalysis.filter((c) => c.status === 'high');
@@ -177,11 +181,37 @@ const Index = () => {
             </section>
           </TabsContent>
 
-          <TabsContent value="split">
+          <TabsContent value="split" className="space-y-6">
+            {/* Person Summary Cards */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <PersonSummaryCard
+                personName={person1Name}
+                income={incomeByPerson.pessoa1}
+                expenses={expensesByPerson.pessoa1}
+                variant="person1"
+              />
+              <PersonSummaryCard
+                personName={person2Name}
+                income={incomeByPerson.pessoa2}
+                expenses={expensesByPerson.pessoa2}
+                variant="person2"
+              />
+            </section>
+
+            {/* Split Summary */}
             <ExpenseSplitCard
               splitCalculation={splitCalculation}
               person1Name={person1Name}
               person2Name={person2Name}
+            />
+
+            {/* Detailed Split Table */}
+            <DetailedSplitCard
+              transactions={transactions}
+              splitCalculation={splitCalculation}
+              person1Name={person1Name}
+              person2Name={person2Name}
+              expenseCategoryLabels={expenseCategoryLabels}
             />
           </TabsContent>
 
