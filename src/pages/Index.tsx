@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { TrendingUp, TrendingDown, Wallet, PiggyBank } from 'lucide-react';
 import { useFinance } from '@/hooks/useFinance';
 import { SummaryCard } from '@/components/SummaryCard';
@@ -11,9 +12,13 @@ import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
 import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
 import { PersonSummaryCard } from '@/components/PersonSummaryCard';
 import { DetailedSplitCard } from '@/components/DetailedSplitCard';
+import { PeriodFilter } from '@/components/PeriodFilter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+
   const {
     transactions,
     totalIncome,
@@ -36,7 +41,12 @@ const Index = () => {
     splitCalculation,
     incomeByPerson,
     expensesByPerson,
-  } = useFinance();
+  } = useFinance({ startDate, endDate });
+
+  const handleClearFilter = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
 
   const savingsOpportunities = categoryAnalysis.filter((c) => c.status === 'high');
 
@@ -77,6 +87,17 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-8">
+        {/* Period Filter */}
+        <section>
+          <PeriodFilter
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            onClearFilter={handleClearFilter}
+          />
+        </section>
+
         {/* Summary Cards */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SummaryCard

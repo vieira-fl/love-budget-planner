@@ -14,6 +14,11 @@ import {
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+export interface PeriodFilter {
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+}
+
 const initialTransactions: Transaction[] = [
   // Dezembro 2024
   {
@@ -273,13 +278,40 @@ const initialTransactions: Transaction[] = [
   },
 ];
 
-export function useFinance() {
+export function useFinance(periodFilter?: PeriodFilter) {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [person1Name, setPerson1Name] = useState('Pessoa 1');
   const [person2Name, setPerson2Name] = useState('Pessoa 2');
   const [customExpenseCategories, setCustomExpenseCategories] = useState<Record<string, string>>({});
   const [customIncomeCategories, setCustomIncomeCategories] = useState<Record<string, string>>({});
 
+  // Filter transactions by period
+  const filteredTransactions = useMemo(() => {
+    if (!periodFilter?.startDate && !periodFilter?.endDate) {
+      return transactions;
+    }
+    
+    return transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      
+      if (periodFilter.startDate && periodFilter.endDate) {
+        return isWithinInterval(transactionDate, {
+          start: periodFilter.startDate,
+          end: periodFilter.endDate,
+        });
+      }
+      
+      if (periodFilter.startDate) {
+        return transactionDate >= periodFilter.startDate;
+      }
+      
+      if (periodFilter.endDate) {
+        return transactionDate <= periodFilter.endDate;
+      }
+      
+      return true;
+    });
+  }, [transactions, periodFilter?.startDate, periodFilter?.endDate]);
   const expenseCategoryLabels = useMemo(() => ({
     ...defaultExpenseCategoryLabels,
     ...customExpenseCategories,
@@ -299,21 +331,21 @@ export function useFinance() {
   };
 
   const totalIncome = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const totalExpenses = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const balance = useMemo(() => totalIncome - totalExpenses, [totalIncome, totalExpenses]);
 
   const categoryAnalysis = useMemo((): CategoryAnalysis[] => {
-    const expensesByCategory = transactions
+    const expensesByCategory = filteredTransactions
       .filter(t => t.type === 'expense')
       .reduce((acc, t) => {
         const category = t.category as ExpenseCategory;
@@ -343,14 +375,14 @@ export function useFinance() {
         };
       })
       .sort((a, b) => b.percentage - a.percentage);
-  }, [transactions, totalIncome, expenseCategoryLabels]);
+  }, [filteredTransactions, totalIncome, expenseCategoryLabels]);
 
   const top10Expenses = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter(t => t.type === 'expense')
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 10);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const monthlyComparison = useMemo((): MonthlyComparison[] => {
     const now = new Date();
@@ -422,24 +454,24 @@ export function useFinance() {
   }, [monthlyComparison, expenseCategoryLabels]);
 
   const incomeByPerson = useMemo(() => {
-    const person1Income = transactions
+    const person1Income = filteredTransactions
       .filter(t => t.type === 'income' && t.person === 'pessoa1')
       .reduce((sum, t) => sum + t.amount, 0);
-    const person2Income = transactions
+    const person2Income = filteredTransactions
       .filter(t => t.type === 'income' && t.person === 'pessoa2')
       .reduce((sum, t) => sum + t.amount, 0);
     return { pessoa1: person1Income, pessoa2: person2Income };
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const expensesByPerson = useMemo(() => {
-    const person1Expenses = transactions
+    const person1Expenses = filteredTransactions
       .filter(t => t.type === 'expense' && t.person === 'pessoa1')
       .reduce((sum, t) => sum + t.amount, 0);
-    const person2Expenses = transactions
+    const person2Expenses = filteredTransactions
       .filter(t => t.type === 'expense' && t.person === 'pessoa2')
       .reduce((sum, t) => sum + t.amount, 0);
     return { pessoa1: person1Expenses, pessoa2: person2Expenses };
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const splitCalculation = useMemo((): SplitCalculation => {
     const person1Income = incomeByPerson.pessoa1;
@@ -451,7 +483,7 @@ export function useFinance() {
     const person2IncomePercentage = totalIncomeCalc > 0 ? (person2Income / totalIncomeCalc) * 100 : 50;
 
     // Get only shared expenses (includeInSplit = true)
-    const sharedExpenses = transactions.filter(t => t.type === 'expense' && t.includeInSplit);
+    const sharedExpenses = filteredTransactions.filter(t => t.type === 'expense' && t.includeInSplit);
     const totalSharedExpenses = sharedExpenses.reduce((sum, t) => sum + t.amount, 0);
 
     // Calculate ideal share based on income percentage
@@ -472,7 +504,6 @@ export function useFinance() {
 
     // Calculate settlement
     const person1Difference = person1ActualPaid - person1IdealShare;
-    const person2Difference = person2ActualPaid - person2IdealShare;
 
     let settlement: SplitCalculation['settlement'] = {
       fromPerson: null,
@@ -510,7 +541,7 @@ export function useFinance() {
       person2ExpenseToIncomeRatio,
       settlement,
     };
-  }, [transactions, incomeByPerson]);
+  }, [filteredTransactions, incomeByPerson]);
 
   const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
     const newTransaction: Transaction = {
@@ -525,7 +556,8 @@ export function useFinance() {
   };
 
   return {
-    transactions,
+    transactions: filteredTransactions,
+    allTransactions: transactions,
     totalIncome,
     totalExpenses,
     balance,
