@@ -1,0 +1,267 @@
+import { useMemo, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Transaction, RecurrenceType } from '@/types/finance';
+import { FileUp, Info, CheckCircle2, AlertTriangle } from 'lucide-react';
+
+interface ImportExpensesDialogProps {
+  onImport: (transactions: Omit<Transaction, 'id'>[]) => void;
+  person1Name: string;
+  person2Name: string;
+  expenseCategoryLabels: Record<string, string>;
+}
+
+interface ParsedResult {
+  transactions: Omit<Transaction, 'id'>[];
+  errors: string[];
+}
+
+const normalizeHeader = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_');
+
+const parseBoolean = (value: string | undefined, defaultValue: boolean) => {
+  if (!value) return defaultValue;
+  const normalized = value.trim().toLowerCase();
+  if (['false', '0', 'nao', 'não', 'n'].includes(normalized)) return false;
+  if (['true', '1', 'sim', 's'].includes(normalized)) return true;
+  return defaultValue;
+};
+
+const parseRecurrence = (value?: string): RecurrenceType => {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === 'recorrente' ? 'recorrente' : 'pontual';
+};
+
+const parseLocalDate = (dateStr: string) => {
+  const [y, m, d] = dateStr.split(/[-\/]/).map(Number);
+  return new Date(y, (m ?? 1) - 1, d ?? 1);
+};
+
+const parseAmount = (value: string) => parseFloat(value.replace(/\./g, '').replace(',', '.'));
+
+export function ImportExpensesDialog({
+  onImport,
+  person1Name,
+  person2Name,
+  expenseCategoryLabels,
+}: ImportExpensesDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [lastResult, setLastResult] = useState<ParsedResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const acceptedCategories = useMemo(
+    () => Object.values(expenseCategoryLabels).join(', '),
+    [expenseCategoryLabels]
+  );
+
+  const resolvePerson = (value: string): 'pessoa1' | 'pessoa2' | null => {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'pessoa1' || normalized === 'p1' || normalized === person1Name.trim().toLowerCase()) {
+      return 'pessoa1';
+    }
+    if (normalized === 'pessoa2' || normalized === 'p2' || normalized === person2Name.trim().toLowerCase()) {
+      return 'pessoa2';
+    }
+    return null;
+  };
+
+  const parseCsv = (content: string): ParsedResult => {
+    const lines = content
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    if (lines.length === 0) {
+      throw new Error('O arquivo CSV está vazio.');
+    }
+
+    const headers = lines.shift()!
+      .split(',')
+      .map(normalizeHeader);
+
+    const getValue = (row: string[], key: string) => {
+      const index = headers.indexOf(key);
+      return index >= 0 ? row[index] : undefined;
+    };
+
+    const transactions: Omit<Transaction, 'id'>[] = [];
+    const errors: string[] = [];
+
+    lines.forEach((line, index) => {
+      const row = line.split(',');
+      const description = getValue(row, 'descricao') ?? getValue(row, 'descricao_da_despesa');
+      const amountValue = getValue(row, 'valor') ?? getValue(row, 'valor_da_despesa');
+      const personValue = getValue(row, 'pessoa') ?? getValue(row, 'pago_por');
+      const dateValue = getValue(row, 'data');
+
+      if (!description || !amountValue || !personValue || !dateValue) {
+        errors.push(`Linha ${index + 2}: dados obrigatórios ausentes.`);
+        return;
+      }
+
+      const person = resolvePerson(personValue);
+      if (!person) {
+        errors.push(`Linha ${index + 2}: pessoa "${personValue}" não reconhecida.`);
+        return;
+      }
+
+      const amount = parseAmount(amountValue);
+      if (Number.isNaN(amount)) {
+        errors.push(`Linha ${index + 2}: valor "${amountValue}" inválido.`);
+        return;
+      }
+
+      const date = parseLocalDate(dateValue);
+      if (Number.isNaN(date.getTime())) {
+        errors.push(`Linha ${index + 2}: data "${dateValue}" inválida.`);
+        return;
+      }
+
+      const category = (getValue(row, 'categoria') || 'outros').toLowerCase();
+      const recurrence = parseRecurrence(getValue(row, 'recorrencia'));
+      const includeInSplit = parseBoolean(getValue(row, 'incluir_no_rateio'), true);
+
+      transactions.push({
+        type: 'expense',
+        category,
+        description,
+        amount,
+        person,
+        date,
+        recurrence,
+        includeInSplit,
+      });
+    });
+
+    return { transactions, errors };
+  };
+
+  const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    setError(null);
+    setLastResult(null);
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const content = String(e.target?.result || '');
+        const result = parseCsv(content);
+
+        if (result.transactions.length === 0) {
+          throw new Error('Nenhuma despesa válida encontrada no arquivo.');
+        }
+
+        onImport(result.transactions);
+        setLastResult(result);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Não foi possível processar o arquivo.');
+      } finally {
+        setIsProcessing(false);
+        event.target.value = '';
+      }
+    };
+
+    reader.onerror = () => {
+      setError('Não foi possível ler o arquivo selecionado.');
+      setIsProcessing(false);
+    };
+
+    reader.readAsText(file, 'utf-8');
+  };
+
+  const handleClose = (openState: boolean) => {
+    setOpen(openState);
+    if (!openState) {
+      setError(null);
+      setLastResult(null);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className="gap-2 border-dashed border-primary/50 text-primary hover:text-primary"
+        >
+          <FileUp className="h-4 w-4" />
+          + Arquivo de Despesas
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[540px] bg-card max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">Importar Despesas via CSV</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Formato esperado</AlertTitle>
+            <AlertDescription className="space-y-1 text-sm text-muted-foreground">
+              <p>Inclua as colunas: <strong>descricao</strong>, <strong>valor</strong>, <strong>categoria</strong>, <strong>pessoa</strong>, <strong>data</strong>, <strong>recorrencia</strong>, <strong>incluir_no_rateio</strong>.</p>
+              <p>Use datas no formato AAAA-MM-DD e valores numéricos com vírgula ou ponto.</p>
+              <p>Informe a pessoa como "pessoa1"/{person1Name} ou "pessoa2"/{person2Name}.</p>
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-2">
+            <Label className="text-foreground">Arquivo CSV</Label>
+            <Input
+              type="file"
+              accept=".csv,text/csv"
+              disabled={isProcessing}
+              onChange={handleFile}
+              className="bg-background border-input cursor-pointer"
+            />
+            <p className="text-xs text-muted-foreground">
+              Categorias conhecidas: {acceptedCategories}. Deixe vazio para usar "Outros".
+            </p>
+          </div>
+
+          {lastResult && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" />
+                {lastResult.transactions.length} despesas importadas com sucesso.
+              </div>
+              {lastResult.errors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Linhas ignoradas</AlertTitle>
+                  <AlertDescription className="space-y-1">
+                    {lastResult.errors.map(message => (
+                      <p key={message} className="text-sm">{message}</p>
+                    ))}
+                  </AlertDescription>
+                </Alert>
+              )}
+              <Separator />
+              <p className="text-xs text-muted-foreground">
+                Feche esta janela para selecionar outro arquivo ou concluir a importação.
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Erro ao importar</AlertTitle>
+              <AlertDescription className="text-sm">{error}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
