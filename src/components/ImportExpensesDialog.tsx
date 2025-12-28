@@ -22,6 +22,7 @@ interface ParsedResult {
 
 const normalizeHeader = (value: string) =>
   value
+    .replace(/^\uFEFF/, '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_');
@@ -40,8 +41,54 @@ const parseRecurrence = (value?: string): RecurrenceType => {
 };
 
 const parseLocalDate = (dateStr: string) => {
-  const [y, m, d] = dateStr.split(/[-\/]/).map(Number);
-  return new Date(y, (m ?? 1) - 1, d ?? 1);
+  const parts = dateStr
+    .trim()
+    .split(/[-/]/)
+    .filter(Boolean);
+
+  if (parts.length < 3) return new Date(NaN);
+
+  const [p1, p2, p3] = parts.map(Number);
+  if ([p1, p2, p3].some(Number.isNaN)) return new Date(NaN);
+
+  const isYearFirst = parts[0].length === 4;
+  const isYearLast = parts[2].length === 4 || parts[2].length === 2;
+
+  let year = isYearFirst ? p1 : isYearLast ? p3 : p3;
+  const month = isYearFirst ? p2 : p2;
+  const day = isYearFirst ? p3 : p1;
+
+  if (year < 100) {
+    year = 2000 + year;
+  }
+
+  const parsed = new Date(year, (month ?? 1) - 1, day ?? 1);
+  const isValidDate =
+    parsed.getFullYear() === year &&
+    parsed.getMonth() === (month ?? 1) - 1 &&
+    parsed.getDate() === (day ?? 1);
+
+  return isValidDate ? parsed : new Date(NaN);
+};
+
+const detectDelimiter = (lines: string[]) => {
+  const delimiters: Array<'\t' | ';' | ','> = ['\t', ';', ','];
+
+  const { delimiter } = lines.slice(0, 5).reduce(
+    (best, line) => {
+      delimiters.forEach(candidate => {
+        const score = line.split(candidate).length - 1;
+
+        if (score > best.score) {
+          best = { delimiter: candidate, score };
+        }
+      });
+      return best;
+    },
+    { delimiter: ',' as '\t' | ';' | ',', score: 0 }
+  );
+
+  return delimiter;
 };
 
 const parseAmount = (value: string) => parseFloat(value.replace(/\./g, '').replace(',', '.'));
@@ -83,8 +130,10 @@ export function ImportExpensesDialog({
       throw new Error('O arquivo CSV está vazio.');
     }
 
+    const delimiter = detectDelimiter(lines);
+
     const headers = lines.shift()!
-      .split(',')
+      .split(delimiter)
       .map(normalizeHeader);
 
     const getValue = (row: string[], key: string) => {
@@ -96,7 +145,7 @@ export function ImportExpensesDialog({
     const errors: string[] = [];
 
     lines.forEach((line, index) => {
-      const row = line.split(',');
+      const row = line.split(delimiter);
       const description = getValue(row, 'descricao') ?? getValue(row, 'descricao_da_despesa');
       const amountValue = getValue(row, 'valor') ?? getValue(row, 'valor_da_despesa');
       const personValue = getValue(row, 'pessoa') ?? getValue(row, 'pago_por');
@@ -210,7 +259,8 @@ export function ImportExpensesDialog({
             <AlertTitle>Formato esperado</AlertTitle>
             <AlertDescription className="space-y-1 text-sm text-muted-foreground">
               <p>Inclua as colunas: <strong>descricao</strong>, <strong>valor</strong>, <strong>categoria</strong>, <strong>pessoa</strong>, <strong>data</strong>, <strong>recorrencia</strong>, <strong>incluir_no_rateio</strong>.</p>
-              <p>Use datas no formato AAAA-MM-DD e valores numéricos com vírgula ou ponto.</p>
+              <p>Use datas no formato AAAA-MM-DD ou DD/MM/AA(AA) e valores numéricos com vírgula ou ponto.</p>
+              <p>O arquivo pode ser separado por vírgula, ponto e vírgula ou tabulação.</p>
               <p>Informe a pessoa como "pessoa1"/{person1Name} ou "pessoa2"/{person2Name}.</p>
             </AlertDescription>
           </Alert>
