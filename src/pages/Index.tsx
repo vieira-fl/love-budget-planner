@@ -15,6 +15,7 @@ import { DetailedSplitCard } from '@/components/DetailedSplitCard';
 import { PeriodFilter } from '@/components/PeriodFilter';
 import { CumulativeChart } from '@/components/CumulativeChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ImportExpensesDialog } from '@/components/ImportExpensesDialog';
 
 const Index = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -75,16 +76,24 @@ const Index = () => {
                 onPerson1NameChange={setPerson1Name}
                 onPerson2NameChange={setPerson2Name}
               />
-              <AddTransactionDialog
-                onAdd={addTransaction}
-                onAddMultiple={addMultipleTransactions}
-                person1Name={person1Name}
-                person2Name={person2Name}
-                expenseCategoryLabels={expenseCategoryLabels}
-                incomeCategoryLabels={incomeCategoryLabels}
-                onAddExpenseCategory={addExpenseCategory}
-                onAddIncomeCategory={addIncomeCategory}
-              />
+              <div className="flex items-center gap-2">
+                <AddTransactionDialog
+                  onAdd={addTransaction}
+                  onAddMultiple={addMultipleTransactions}
+                  person1Name={person1Name}
+                  person2Name={person2Name}
+                  expenseCategoryLabels={expenseCategoryLabels}
+                  incomeCategoryLabels={incomeCategoryLabels}
+                  onAddExpenseCategory={addExpenseCategory}
+                  onAddIncomeCategory={addIncomeCategory}
+                />
+                <ImportExpensesDialog
+                  onImport={addMultipleTransactions}
+                  person1Name={person1Name}
+                  person2Name={person2Name}
+                  expenseCategoryLabels={expenseCategoryLabels}
+                />
+              </div>
             </div>
           </div>
         </div>
