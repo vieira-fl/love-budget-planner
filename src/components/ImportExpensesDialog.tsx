@@ -22,6 +22,7 @@ interface ParsedResult {
 
 const normalizeHeader = (value: string) =>
   value
+    .replace(/^\uFEFF/, '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_');
@@ -42,7 +43,7 @@ const parseRecurrence = (value?: string): RecurrenceType => {
 const parseLocalDate = (dateStr: string) => {
   const parts = dateStr
     .trim()
-    .split(/[-\/]/)
+    .split(/[-/]/)
     .filter(Boolean);
 
   if (parts.length < 3) return new Date(NaN);
@@ -60,13 +61,22 @@ const parseLocalDate = (dateStr: string) => {
   }
 
   const parsed = new Date(year, (month ?? 1) - 1, day ?? 1);
-  return parsed;
+  const isValidDate =
+    parsed.getFullYear() === year &&
+    parsed.getMonth() === (month ?? 1) - 1 &&
+    parsed.getDate() === (day ?? 1);
+
+  return isValidDate ? parsed : new Date(NaN);
 };
 
 const detectDelimiter = (line: string) => {
-  if (line.includes('\t')) return '\t';
-  if (line.includes(';')) return ';';
-  return ',';
+  const counts = {
+    '\t': (line.match(/\t/g) || []).length,
+    ';': (line.match(/;/g) || []).length,
+    ',': (line.match(/,/g) || []).length,
+  };
+
+  return (Object.entries(counts).sort(([, a], [, b]) => b - a)[0] || [','])[0];
 };
 
 const parseAmount = (value: string) => parseFloat(value.replace(/\./g, '').replace(',', '.'));
