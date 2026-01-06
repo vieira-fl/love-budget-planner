@@ -253,9 +253,9 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
                           <>
                             <td key={`${month.monthKey}-value`} className="text-right py-2.5 px-2 text-muted-foreground">
                               {value ? (
-                                <div className="flex flex-col items-end">
+                                <div className="flex flex-col items-end text-[13px] leading-tight">
                                   <span>{formatCurrency(value)}</span>
-                                  <span className="text-xs text-muted-foreground/70">
+                                  <span className="text-[11px] text-muted-foreground/70">
                                     {formatPercent(percentage)}
                                   </span>
                                 </div>
@@ -265,16 +265,16 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
                               <td key={`${month.monthKey}-var`} className="text-right py-2.5 px-1">
                                 {variation ? (
                                   <span className={`inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded ${
-                                    variation.type === 'up' 
-                                      ? 'text-expense bg-expense/10' 
-                                      : variation.type === 'down' 
-                                        ? 'text-income bg-income/10' 
+                                    variation.type === 'up'
+                                      ? 'text-expense bg-expense/10'
+                                      : variation.type === 'down'
+                                        ? 'text-income bg-income/10'
                                         : 'text-muted-foreground'
                                   }`}>
                                     {variation.type === 'up' && <TrendingUp className="h-3 w-3" />}
                                     {variation.type === 'down' && <TrendingDown className="h-3 w-3" />}
                                     {variation.type === 'same' && <Minus className="h-3 w-3" />}
-                                    {variation.value !== 0 ? `${variation.value > 0 ? '+' : ''}${variation.value.toFixed(0)}%` : '0%'}
+                                    {`${Math.abs(variation.value).toFixed(0)}%`}
                                   </span>
                                 ) : (
                                   <span className="text-xs text-muted-foreground">-</span>
@@ -294,25 +294,25 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
                       return (
                         <>
                           <td key={`${month.monthKey}-total`} className="text-right py-2.5 px-2 text-expense">
-                            <div className="flex flex-col items-end">
+                            <div className="flex flex-col items-end text-[13px] leading-tight">
                               <span>{formatCurrency(month.total)}</span>
-                              <span className="text-xs text-muted-foreground/70">100%</span>
+                              <span className="text-[11px] text-muted-foreground/70">100%</span>
                             </div>
                           </td>
                           {monthIndex > 0 && (
                             <td key={`${month.monthKey}-total-var`} className="text-right py-2.5 px-1">
                               {totalVar.variation !== null ? (
                                 <span className={`inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded ${
-                                  totalVar.variation > 0 
-                                    ? 'text-expense bg-expense/10' 
-                                    : totalVar.variation < 0 
-                                      ? 'text-income bg-income/10' 
+                                  totalVar.variation > 0
+                                    ? 'text-expense bg-expense/10'
+                                    : totalVar.variation < 0
+                                      ? 'text-income bg-income/10'
                                       : 'text-muted-foreground'
                                 }`}>
                                   {totalVar.variation > 0 && <TrendingUp className="h-3 w-3" />}
                                   {totalVar.variation < 0 && <TrendingDown className="h-3 w-3" />}
                                   {totalVar.variation === 0 && <Minus className="h-3 w-3" />}
-                                  {totalVar.variation > 0 ? '+' : ''}{totalVar.variation.toFixed(0)}%
+                                  {Math.abs(totalVar.variation).toFixed(0)}%
                                 </span>
                               ) : (
                                 <span className="text-xs text-muted-foreground">-</span>
