@@ -45,6 +45,7 @@ const Index = () => {
     splitCalculation,
     incomeByPerson,
     expensesByPerson,
+    monthlyBalanceSummary,
   } = useFinance({ startDate, endDate });
 
   const handleClearFilter = () => {
@@ -252,6 +253,7 @@ const Index = () => {
               monthlyData={monthlyComparison}
               biggestIncrease={biggestCategoryIncrease}
               expenseCategoryLabels={expenseCategoryLabels}
+              monthlyBalanceSummary={monthlyBalanceSummary}
             />
           </TabsContent>
         </Tabs>
