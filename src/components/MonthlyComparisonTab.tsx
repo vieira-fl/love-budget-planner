@@ -1,12 +1,13 @@
-import { MonthlyComparison, CategoryChange } from '@/types/finance';
+import { MonthlyComparison, CategoryChange, MonthlyBalanceSummary } from '@/types/finance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart, Line } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Calendar, Minus } from 'lucide-react';
 
 interface MonthlyComparisonTabProps {
   monthlyData: MonthlyComparison[];
   biggestIncrease: CategoryChange | null;
   expenseCategoryLabels: Record<string, string>;
+  monthlyBalanceSummary: MonthlyBalanceSummary[];
 }
 
 const COLORS = [
@@ -22,7 +23,7 @@ const COLORS = [
   '#FFBB28',
 ];
 
-export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCategoryLabels }: MonthlyComparisonTabProps) {
+export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCategoryLabels, monthlyBalanceSummary }: MonthlyComparisonTabProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -56,6 +57,13 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
     
     return dataPoint;
   });
+
+  const financialOverviewData = monthlyBalanceSummary.map(month => ({
+    month: month.month,
+    income: month.income,
+    expenses: month.expenses,
+    balance: month.balance,
+  }));
 
   // Prepare category totals table data with percentages and variations
   const categoryTotals = allCategories.map(category => {
@@ -147,6 +155,68 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
           </CardContent>
         </Card>
       )}
+
+      {/* Monthly Financial Overview */}
+      <Card className="bg-card card-shadow">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            Resumo Mensal (Receitas, Despesas e Saldo)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {financialOverviewData.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              Adicione transações para ver o resumo mensal
+            </p>
+          ) : (
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={financialOverviewData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <YAxis
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                    tickFormatter={(value) => `R$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    formatter={(value: number, name: string) => {
+                      const labelMap: Record<string, string> = {
+                        income: 'Receitas',
+                        expenses: 'Despesas',
+                        balance: 'Saldo',
+                      };
+                      return [formatCurrency(value), labelMap[name] || name];
+                    }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '12px' }} formatter={(value) => {
+                    const labelMap: Record<string, string> = {
+                      income: 'Receitas',
+                      expenses: 'Despesas',
+                      balance: 'Saldo',
+                    };
+                    return labelMap[value] || value;
+                  }} />
+                  <Bar dataKey="income" fill="hsl(var(--income))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" fill="hsl(var(--expense))" radius={[4, 4, 0, 0]} />
+                  <Line type="monotone" dataKey="balance" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Bar Chart */}
       <Card className="bg-card card-shadow">

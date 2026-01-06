@@ -78,6 +78,14 @@ export interface CategoryChange {
   changePercentage: number;
 }
 
+export interface MonthlyBalanceSummary {
+  month: string;
+  monthKey: string;
+  income: number;
+  expenses: number;
+  balance: number;
+}
+
 export const defaultExpenseCategoryLabels: Record<string, string> = {
   moradia: 'Moradia',
   alimentacao: 'Alimentação',

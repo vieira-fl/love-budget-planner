@@ -4,6 +4,16 @@ import { cn } from '@/lib/utils';
 import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil, Tag as TagIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EditTransactionDialog } from './EditTransactionDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -26,6 +36,7 @@ export function TransactionList({
 }: TransactionListProps) {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -56,6 +67,13 @@ export function TransactionList({
   const handleSave = (transaction: Transaction) => {
     onUpdate(transaction);
     setEditingTransaction(null);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (transactionToDelete) {
+      onDelete(transactionToDelete.id);
+      setTransactionToDelete(null);
+    }
   };
 
   const sortedTransactions = [...transactions].sort(
@@ -146,7 +164,7 @@ export function TransactionList({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-expense hover:bg-expense/10"
-                  onClick={() => onDelete(transaction.id)}
+                  onClick={() => setTransactionToDelete(transaction)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -171,6 +189,24 @@ export function TransactionList({
         expenseCategoryLabels={expenseCategoryLabels}
         incomeCategoryLabels={incomeCategoryLabels}
       />
+
+      <AlertDialog open={!!transactionToDelete} onOpenChange={(open) => !open && setTransactionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover a transação
+              {transactionToDelete ? ` "${transactionToDelete.description}"` : ''}? Essa ação não poderá ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-expense text-expense-foreground hover:bg-expense/90" onClick={handleDeleteConfirm}>
+              Confirmar exclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

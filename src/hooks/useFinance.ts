@@ -2,14 +2,15 @@ import { useState, useMemo } from 'react';
 import { 
   Transaction, 
   ExpenseCategory, 
-  CategoryAnalysis, 
-  categoryThresholds, 
+  CategoryAnalysis,
+  categoryThresholds,
   defaultThreshold,
   defaultExpenseCategoryLabels,
   defaultIncomeCategoryLabels,
   MonthlyComparison,
   CategoryChange,
-  SplitCalculation
+  SplitCalculation,
+  MonthlyBalanceSummary
 } from '@/types/finance';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -385,8 +386,7 @@ export function useFinance(periodFilter?: PeriodFilter) {
   }, [filteredTransactions]);
 
   const monthlyComparison = useMemo((): MonthlyComparison[] => {
-    // Get unique months from all transactions (not just filtered)
-    const expenseTransactions = transactions.filter(t => t.type === 'expense');
+    const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
     
     if (expenseTransactions.length === 0) {
       return [];
@@ -394,7 +394,7 @@ export function useFinance(periodFilter?: PeriodFilter) {
 
     // Find all unique year-months from transactions
     const uniqueMonths = new Map<string, { date: Date; label: string }>();
-    
+
     expenseTransactions.forEach(t => {
       const date = new Date(t.date);
       const monthKey = format(date, 'yyyy-MM');
@@ -436,7 +436,48 @@ export function useFinance(periodFilter?: PeriodFilter) {
     });
 
     return months;
-  }, [transactions]);
+  }, [filteredTransactions]);
+
+  const monthlyBalanceSummary = useMemo((): MonthlyBalanceSummary[] => {
+    if (filteredTransactions.length === 0) {
+      return [];
+    }
+
+    const monthsMap = new Map<string, { income: number; expenses: number; date: Date; label: string }>();
+
+    filteredTransactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      const monthKey = format(date, 'yyyy-MM');
+
+      if (!monthsMap.has(monthKey)) {
+        monthsMap.set(monthKey, {
+          income: 0,
+          expenses: 0,
+          date,
+          label: format(date, 'MMM/yy', { locale: ptBR }),
+        });
+      }
+
+      const monthData = monthsMap.get(monthKey)!;
+      if (transaction.type === 'income') {
+        monthData.income += transaction.amount;
+      } else {
+        monthData.expenses += transaction.amount;
+      }
+    });
+
+    const sortedMonths = Array.from(monthsMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-6);
+
+    return sortedMonths.map(([monthKey, data]) => ({
+      month: data.label,
+      monthKey,
+      income: data.income,
+      expenses: data.expenses,
+      balance: data.income - data.expenses,
+    }));
+  }, [filteredTransactions]);
 
   const biggestCategoryIncrease = useMemo((): CategoryChange | null => {
     if (monthlyComparison.length < 2) return null;
@@ -612,5 +653,6 @@ export function useFinance(periodFilter?: PeriodFilter) {
     monthlyComparison,
     biggestCategoryIncrease,
     splitCalculation,
+    monthlyBalanceSummary,
   };
 }
