@@ -50,6 +50,7 @@ export function AddTransactionDialog({
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState<ExpenseCategory | IncomeCategory>('outros');
   const [description, setDescription] = useState('');
+  const [tag, setTag] = useState('');
   const [amount, setAmount] = useState('');
   const [person, setPerson] = useState<'pessoa1' | 'pessoa2'>('pessoa1');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -80,6 +81,7 @@ export function AddTransactionDialog({
       type,
       category,
       description,
+      tag: tag.trim() || undefined,
       amount: parseFloat(amount),
       person,
       date: parsedDate,
@@ -117,6 +119,7 @@ export function AddTransactionDialog({
 
   const resetForm = () => {
     setDescription('');
+    setTag('');
     setAmount('');
     setCategory('outros');
     setRecurrence('pontual');
@@ -182,6 +185,7 @@ export function AddTransactionDialog({
               onClick={() => {
                 setType('income');
                 setCategory('salario');
+                setTag('');
               }}
               className={cn(
                 'flex-1 py-2 rounded-md text-sm font-medium transition-all',
@@ -220,6 +224,22 @@ export function AddTransactionDialog({
               required
             />
           </div>
+
+          {type === 'expense' && (
+            <div className="space-y-2">
+              <Label htmlFor="tag" className="text-foreground">Tag da despesa</Label>
+              <Input
+                id="tag"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+                placeholder="Ex: Viagem Paris, Presente, Reforma..."
+                className="bg-background border-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Use tags para identificar rapidamente despesas específicas dentro da categoria.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="amount" className="text-foreground">Valor (R$)</Label>

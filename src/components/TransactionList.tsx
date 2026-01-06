@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels } from '@/types/finance';
 import { cn } from '@/lib/utils';
-import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil, Tag as TagIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EditTransactionDialog } from './EditTransactionDialog';
 
@@ -112,6 +112,13 @@ export function TransactionList({
                     )}>
                       {transaction.recurrence === 'recorrente' ? 'Recorrente' : 'Pontual'}
                     </span>
+                    {transaction.tag && <span className="text-xs text-muted-foreground">•</span>}
+                    {transaction.tag && (
+                      <span className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        <TagIcon className="h-3 w-3" />
+                        {transaction.tag}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
