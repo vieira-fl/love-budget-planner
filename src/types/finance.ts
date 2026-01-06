@@ -27,6 +27,7 @@ export interface Transaction {
   type: TransactionType;
   category: ExpenseCategory | IncomeCategory;
   description: string;
+  tag?: string;
   amount: number;
   person: 'pessoa1' | 'pessoa2';
   date: Date;

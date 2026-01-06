@@ -33,6 +33,7 @@ export function EditTransactionDialog({
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState<ExpenseCategory | IncomeCategory>('outros');
   const [description, setDescription] = useState('');
+  const [tag, setTag] = useState('');
   const [amount, setAmount] = useState('');
   const [person, setPerson] = useState<'pessoa1' | 'pessoa2'>('pessoa1');
   const [date, setDate] = useState('');
@@ -44,6 +45,7 @@ export function EditTransactionDialog({
       setType(transaction.type);
       setCategory(transaction.category);
       setDescription(transaction.description);
+      setTag(transaction.tag || '');
       setAmount(transaction.amount.toString());
       setPerson(transaction.person);
       setDate(format(new Date(transaction.date), 'yyyy-MM-dd'));
@@ -62,6 +64,7 @@ export function EditTransactionDialog({
       type,
       category,
       description,
+      tag: tag.trim() || undefined,
       amount: parseFloat(amount),
       person,
       date: new Date(date),
@@ -88,6 +91,7 @@ export function EditTransactionDialog({
               onClick={() => {
                 setType('income');
                 if (type !== 'income') setCategory('salario');
+                setTag('');
               }}
               className={cn(
                 'flex-1 py-2 rounded-md text-sm font-medium transition-all',
@@ -126,6 +130,22 @@ export function EditTransactionDialog({
               required
             />
           </div>
+
+          {type === 'expense' && (
+            <div className="space-y-2">
+              <Label htmlFor="edit-tag" className="text-foreground">Tag da despesa</Label>
+              <Input
+                id="edit-tag"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+                placeholder="Ex: Viagem Paris, Presente, Reforma..."
+                className="bg-background border-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Use tags para identificar rapidamente despesas específicas dentro da categoria.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="edit-amount" className="text-foreground">Valor (R$)</Label>
