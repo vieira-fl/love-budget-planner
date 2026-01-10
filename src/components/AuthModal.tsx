@@ -12,9 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader2, User, Mail, Lock, KeyRound } from 'lucide-react';
-
-const ACCESS_CODE = '0957';
 
 interface AuthModalProps {
   open: boolean;
@@ -55,10 +54,24 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (accessCode !== ACCESS_CODE) {
+    // Validate access code server-side
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-access-code', {
+        body: { accessCode }
+      });
+      
+      if (error || !data?.valid) {
+        toast({
+          title: 'Código de acesso inválido',
+          description: 'Por favor, insira o código de acesso correto para criar uma conta.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    } catch {
       toast({
-        title: 'Código de acesso inválido',
-        description: 'Por favor, insira o código de acesso correto para criar uma conta.',
+        title: 'Erro de validação',
+        description: 'Não foi possível validar o código de acesso. Tente novamente.',
         variant: 'destructive',
       });
       return;
