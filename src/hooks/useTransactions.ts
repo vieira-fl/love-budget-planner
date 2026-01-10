@@ -38,6 +38,17 @@ interface DbTransaction {
   updated_at: string;
 }
 
+// Map DB recurrence values to frontend values
+const mapRecurrenceFromDb = (dbValue: string | null): 'pontual' | 'recorrente' => {
+  if (dbValue === 'recurring') return 'recorrente';
+  return 'pontual'; // 'once' or null -> 'pontual'
+};
+
+// Map frontend recurrence values to DB values
+const mapRecurrenceToDb = (frontendValue: 'pontual' | 'recorrente'): string => {
+  return frontendValue === 'recorrente' ? 'recurring' : 'once';
+};
+
 const mapDbToTransaction = (db: DbTransaction): Transaction => ({
   id: db.id,
   type: db.type as 'income' | 'expense',
@@ -47,7 +58,7 @@ const mapDbToTransaction = (db: DbTransaction): Transaction => ({
   amount: Number(db.amount),
   person: db.person,
   date: new Date(db.date),
-  recurrence: (db.recurrence || 'pontual') as 'pontual' | 'recorrente',
+  recurrence: mapRecurrenceFromDb(db.recurrence),
   includeInSplit: db.include_in_split,
 });
 
@@ -351,7 +362,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
           amount: transaction.amount,
           person: transaction.person,
           date: format(transaction.date, 'yyyy-MM-dd'),
-          recurrence: transaction.recurrence,
+          recurrence: mapRecurrenceToDb(transaction.recurrence),
           include_in_split: transaction.includeInSplit,
         })
         .select()
@@ -399,7 +410,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
         amount: t.amount,
         person: t.person,
         date: format(t.date, 'yyyy-MM-dd'),
-        recurrence: t.recurrence,
+        recurrence: mapRecurrenceToDb(t.recurrence),
         include_in_split: t.includeInSplit,
       }));
 
@@ -444,7 +455,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
           amount: transaction.amount,
           person: transaction.person,
           date: format(transaction.date, 'yyyy-MM-dd'),
-          recurrence: transaction.recurrence,
+          recurrence: mapRecurrenceToDb(transaction.recurrence),
           include_in_split: transaction.includeInSplit,
         })
         .eq('id', transaction.id)
