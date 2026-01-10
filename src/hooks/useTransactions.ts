@@ -84,7 +84,6 @@ export function useTransactions(periodFilter?: PeriodFilter) {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', user.id)
         .order('date', { ascending: false });
 
       if (error) {
@@ -460,8 +459,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
           recurrence: mapRecurrenceToDb(transaction.recurrence),
           include_in_split: transaction.includeInSplit,
         })
-        .eq('id', transaction.id)
-        .eq('user_id', user.id);
+        .eq('id', transaction.id);
 
       if (error) {
         console.error('Error updating transaction:', error);
@@ -491,8 +489,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
       const { error } = await supabase
         .from('transactions')
         .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Error deleting transaction:', error);
