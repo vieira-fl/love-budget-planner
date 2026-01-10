@@ -39,14 +39,16 @@ interface DbTransaction {
 }
 
 // Map DB recurrence values to frontend values
+// DB uses: 'once', 'monthly', 'weekly'
 const mapRecurrenceFromDb = (dbValue: string | null): 'pontual' | 'recorrente' => {
-  if (dbValue === 'recurring') return 'recorrente';
+  if (dbValue === 'monthly' || dbValue === 'weekly') return 'recorrente';
   return 'pontual'; // 'once' or null -> 'pontual'
 };
 
 // Map frontend recurrence values to DB values
+// DB constraint accepts: 'once', 'monthly', 'weekly'
 const mapRecurrenceToDb = (frontendValue: 'pontual' | 'recorrente'): string => {
-  return frontendValue === 'recorrente' ? 'recurring' : 'once';
+  return frontendValue === 'recorrente' ? 'monthly' : 'once';
 };
 
 const mapDbToTransaction = (db: DbTransaction): Transaction => ({
