@@ -10,6 +10,9 @@ import { Top10Expenses } from '@/components/Top10Expenses';
 import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
 import { PeriodFilter } from '@/components/PeriodFilter';
 import { CumulativeChart } from '@/components/CumulativeChart';
+import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
+import { DetailedSplitCard } from '@/components/DetailedSplitCard';
+import { PersonSummaryCard } from '@/components/PersonSummaryCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImportExpensesDialog } from '@/components/ImportExpensesDialog';
 import { UserMenu } from '@/components/UserMenu';
@@ -42,6 +45,9 @@ const Index = () => {
     monthlyComparison,
     biggestCategoryIncrease,
     monthlyBalanceSummary,
+    splitCalculation,
+    uniquePeople,
+    personSummaries,
   } = useTransactions({ startDate, endDate });
 
   const handleClearFilter = () => {
@@ -275,9 +281,10 @@ const Index = () => {
             {/* Tabs - only show if there are transactions */}
             {transactions.length > 0 && (
               <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-2 max-w-lg">
+                <TabsList className="grid w-full grid-cols-3 max-w-lg">
                   <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                   <TabsTrigger value="comparison">Comparativo</TabsTrigger>
+                  <TabsTrigger value="split">Rateio</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
@@ -324,6 +331,60 @@ const Index = () => {
                     expenseCategoryLabels={expenseCategoryLabels}
                     monthlyBalanceSummary={monthlyBalanceSummary}
                   />
+                </TabsContent>
+
+                <TabsContent value="split" className="space-y-6">
+                  {uniquePeople.length >= 2 && splitCalculation ? (
+                    <>
+                      {/* Person Summary Cards */}
+                      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <PersonSummaryCard
+                          personName={uniquePeople[0]}
+                          income={personSummaries[uniquePeople[0]]?.income || 0}
+                          expenses={personSummaries[uniquePeople[0]]?.expenses || 0}
+                          variant="person1"
+                        />
+                        <PersonSummaryCard
+                          personName={uniquePeople[1]}
+                          income={personSummaries[uniquePeople[1]]?.income || 0}
+                          expenses={personSummaries[uniquePeople[1]]?.expenses || 0}
+                          variant="person2"
+                        />
+                      </section>
+
+                      {/* Expense Split Calculation */}
+                      <section>
+                        <ExpenseSplitCard
+                          splitCalculation={splitCalculation}
+                          person1Name={uniquePeople[0]}
+                          person2Name={uniquePeople[1]}
+                        />
+                      </section>
+
+                      {/* Detailed Split */}
+                      <section>
+                        <DetailedSplitCard
+                          transactions={transactions}
+                          splitCalculation={splitCalculation}
+                          expenseCategoryLabels={expenseCategoryLabels}
+                        />
+                      </section>
+                    </>
+                  ) : (
+                    <section className="text-center py-12">
+                      <div className="max-w-md mx-auto space-y-4">
+                        <div className="bg-muted/50 p-4 rounded-full w-fit mx-auto">
+                          <PiggyBank className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-foreground">
+                          Rateio não disponível
+                        </h3>
+                        <p className="text-muted-foreground">
+                          Para calcular o rateio, é necessário que haja transações de pelo menos duas pessoas diferentes.
+                        </p>
+                      </div>
+                    </section>
+                  )}
                 </TabsContent>
               </Tabs>
             )}
