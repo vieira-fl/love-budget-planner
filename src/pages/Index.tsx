@@ -6,12 +6,9 @@ import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
 import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { ExpenseChart } from '@/components/ExpenseChart';
-import { PersonSettings } from '@/components/PersonSettings';
+
 import { Top10Expenses } from '@/components/Top10Expenses';
 import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
-import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
-import { PersonSummaryCard } from '@/components/PersonSummaryCard';
-import { DetailedSplitCard } from '@/components/DetailedSplitCard';
 import { PeriodFilter } from '@/components/PeriodFilter';
 import { CumulativeChart } from '@/components/CumulativeChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -36,10 +33,6 @@ const Index = () => {
     addMultipleTransactions,
     updateTransaction,
     deleteTransaction,
-    person1Name,
-    person2Name,
-    setPerson1Name,
-    setPerson2Name,
     expenseCategoryLabels,
     incomeCategoryLabels,
     addExpenseCategory,
@@ -47,9 +40,6 @@ const Index = () => {
     top10Expenses,
     monthlyComparison,
     biggestCategoryIncrease,
-    splitCalculation,
-    incomeByPerson,
-    expensesByPerson,
     monthlyBalanceSummary,
   } = useFinance({ startDate, endDate });
 
@@ -77,18 +67,11 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-3">
               <UserMenu />
-              <PersonSettings
-                person1Name={person1Name}
-                person2Name={person2Name}
-                onPerson1NameChange={setPerson1Name}
-                onPerson2NameChange={setPerson2Name}
-              />
               <div className="flex items-center gap-2">
                 <AddTransactionDialog
                   onAdd={addTransaction}
                   onAddMultiple={addMultipleTransactions}
-                  person1Name={person1Name}
-                  person2Name={person2Name}
+                  username={profile?.username || 'Usuário'}
                   expenseCategoryLabels={expenseCategoryLabels}
                   incomeCategoryLabels={incomeCategoryLabels}
                   onAddExpenseCategory={addExpenseCategory}
@@ -96,8 +79,7 @@ const Index = () => {
                 />
                 <ImportExpensesDialog
                   onImport={addMultipleTransactions}
-                  person1Name={person1Name}
-                  person2Name={person2Name}
+                  username={profile?.username || 'Usuário'}
                   expenseCategoryLabels={expenseCategoryLabels}
                 />
               </div>
@@ -173,9 +155,8 @@ const Index = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-lg">
+          <TabsList className="grid w-full grid-cols-2 max-w-lg">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="split">Rateio</TabsTrigger>
             <TabsTrigger value="comparison">Comparativo</TabsTrigger>
           </TabsList>
 
@@ -201,8 +182,6 @@ const Index = () => {
               <Top10Expenses
                 expenses={top10Expenses}
                 expenseCategoryLabels={expenseCategoryLabels}
-                person1Name={person1Name}
-                person2Name={person2Name}
               />
             </section>
 
@@ -212,46 +191,10 @@ const Index = () => {
                 transactions={transactions}
                 onDelete={deleteTransaction}
                 onUpdate={updateTransaction}
-                person1Name={person1Name}
-                person2Name={person2Name}
                 expenseCategoryLabels={expenseCategoryLabels}
                 incomeCategoryLabels={incomeCategoryLabels}
               />
             </section>
-          </TabsContent>
-
-          <TabsContent value="split" className="space-y-6">
-            {/* Person Summary Cards */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <PersonSummaryCard
-                personName={person1Name}
-                income={incomeByPerson.pessoa1}
-                expenses={expensesByPerson.pessoa1}
-                variant="person1"
-              />
-              <PersonSummaryCard
-                personName={person2Name}
-                income={incomeByPerson.pessoa2}
-                expenses={expensesByPerson.pessoa2}
-                variant="person2"
-              />
-            </section>
-
-            {/* Split Summary */}
-            <ExpenseSplitCard
-              splitCalculation={splitCalculation}
-              person1Name={person1Name}
-              person2Name={person2Name}
-            />
-
-            {/* Detailed Split Table */}
-            <DetailedSplitCard
-              transactions={transactions}
-              splitCalculation={splitCalculation}
-              person1Name={person1Name}
-              person2Name={person2Name}
-              expenseCategoryLabels={expenseCategoryLabels}
-            />
           </TabsContent>
 
           <TabsContent value="comparison">

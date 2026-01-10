@@ -12,16 +12,12 @@ import { ptBR } from 'date-fns/locale';
 interface DetailedSplitCardProps {
   transactions: Transaction[];
   splitCalculation: SplitCalculation;
-  person1Name: string;
-  person2Name: string;
   expenseCategoryLabels: Record<string, string>;
 }
 
 export function DetailedSplitCard({
   transactions,
   splitCalculation,
-  person1Name,
-  person2Name,
   expenseCategoryLabels,
 }: DetailedSplitCardProps) {
   const [personFilter, setPersonFilter] = useState<string>('all');
@@ -37,6 +33,12 @@ export function DetailedSplitCard({
   const expenses = transactions.filter(t => t.type === 'expense');
   const sharedExpenses = expenses.filter(t => t.includeInSplit);
   const personalExpenses = expenses.filter(t => !t.includeInSplit);
+
+  // Get unique people from transactions
+  const uniquePeople = useMemo(() => {
+    const people = new Set(expenses.map(t => t.person));
+    return Array.from(people).sort();
+  }, [expenses]);
 
   // Get unique categories from shared expenses
   const uniqueCategories = useMemo(() => {
@@ -56,14 +58,8 @@ export function DetailedSplitCard({
   // Calculate filtered totals
   const filteredTotals = useMemo(() => {
     const total = filteredSharedExpenses.reduce((sum, t) => sum + t.amount, 0);
-    const person1Share = (splitCalculation.person1IncomePercentage / 100) * total;
-    const person2Share = (splitCalculation.person2IncomePercentage / 100) * total;
-    return { total, person1Share, person2Share };
-  }, [filteredSharedExpenses, splitCalculation]);
-
-  const getPersonName = (person: 'pessoa1' | 'pessoa2') => {
-    return person === 'pessoa1' ? person1Name : person2Name;
-  };
+    return { total };
+  }, [filteredSharedExpenses]);
 
   const hasActiveFilters = personFilter !== 'all' || categoryFilter !== 'all';
 
@@ -90,8 +86,9 @@ export function DetailedSplitCard({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas pessoas</SelectItem>
-                  <SelectItem value="pessoa1">{person1Name}</SelectItem>
-                  <SelectItem value="pessoa2">{person2Name}</SelectItem>
+                  {uniquePeople.map(person => (
+                    <SelectItem key={person} value={person}>{person}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               
@@ -122,58 +119,36 @@ export function DetailedSplitCard({
                     <TableHead>Categoria</TableHead>
                     <TableHead>Pago por</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-right">{person1Name}</TableHead>
-                    <TableHead className="text-right">{person2Name}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredSharedExpenses.map((expense) => {
-                    const person1Share = (splitCalculation.person1IncomePercentage / 100) * expense.amount;
-                    const person2Share = (splitCalculation.person2IncomePercentage / 100) * expense.amount;
-                    
-                    return (
-                      <TableRow key={expense.id}>
-                        <TableCell className="text-muted-foreground">
-                          {format(new Date(expense.date), 'dd/MM', { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="font-medium">{expense.description}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs">
-                            {expenseCategoryLabels[expense.category] || expense.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={expense.person === 'pessoa1' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {getPersonName(expense.person)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {formatCurrency(expense.amount)}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {formatCurrency(person1Share)}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {formatCurrency(person2Share)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {filteredSharedExpenses.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell className="text-muted-foreground">
+                        {format(new Date(expense.date), 'dd/MM', { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="font-medium">{expense.description}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {expenseCategoryLabels[expense.category] || expense.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="default" className="text-xs">
+                          {expense.person}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatCurrency(expense.amount)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                   <TableRow className="bg-muted/50 font-semibold">
                     <TableCell colSpan={4}>
                       Total {hasActiveFilters ? '(filtrado)' : 'no Rateio'}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(filteredTotals.total)}
-                    </TableCell>
-                    <TableCell className="text-right text-primary">
-                      {formatCurrency(filteredTotals.person1Share)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(filteredTotals.person2Share)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -225,11 +200,8 @@ export function DetailedSplitCard({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={expense.person === 'pessoa1' ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {getPersonName(expense.person)}
+                        <Badge variant="default" className="text-xs">
+                          {expense.person}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-semibold">

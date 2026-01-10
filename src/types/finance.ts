@@ -29,7 +29,7 @@ export interface Transaction {
   description: string;
   tag?: string;
   amount: number;
-  person: 'pessoa1' | 'pessoa2';
+  person: string;
   date: Date;
   recurrence: RecurrenceType;
   includeInSplit: boolean;
@@ -46,8 +46,8 @@ export interface SplitCalculation {
   person1ExpenseToIncomeRatio: number;
   person2ExpenseToIncomeRatio: number;
   settlement: {
-    fromPerson: 'pessoa1' | 'pessoa2' | null;
-    toPerson: 'pessoa1' | 'pessoa2' | null;
+    fromPerson: string | null;
+    toPerson: string | null;
     amount: number;
   };
 }

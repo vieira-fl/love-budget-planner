@@ -8,11 +8,9 @@ import { ptBR } from 'date-fns/locale';
 interface Top10ExpensesProps {
   expenses: Transaction[];
   expenseCategoryLabels: Record<string, string>;
-  person1Name: string;
-  person2Name: string;
 }
 
-export function Top10Expenses({ expenses, expenseCategoryLabels, person1Name, person2Name }: Top10ExpensesProps) {
+export function Top10Expenses({ expenses, expenseCategoryLabels }: Top10ExpensesProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -64,7 +62,7 @@ export function Top10Expenses({ expenses, expenseCategoryLabels, person1Name, pe
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                     <span>{expenseCategoryLabels[expense.category] || expense.category}</span>
                     <span>•</span>
-                    <span>{expense.person === 'pessoa1' ? person1Name : person2Name}</span>
+                    <span>{expense.person}</span>
                     <span>•</span>
                     <span>{format(new Date(expense.date), 'dd/MM/yy', { locale: ptBR })}</span>
                   </div>

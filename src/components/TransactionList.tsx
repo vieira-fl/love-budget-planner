@@ -19,8 +19,6 @@ interface TransactionListProps {
   transactions: Transaction[];
   onDelete: (id: string) => void;
   onUpdate: (transaction: Transaction) => void;
-  person1Name: string;
-  person2Name: string;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
 }
@@ -29,8 +27,6 @@ export function TransactionList({
   transactions, 
   onDelete, 
   onUpdate,
-  person1Name, 
-  person2Name,
   expenseCategoryLabels,
   incomeCategoryLabels,
 }: TransactionListProps) {
@@ -121,7 +117,7 @@ export function TransactionList({
                     </span>
                     <span className="text-xs text-muted-foreground">•</span>
                     <span className="text-xs text-muted-foreground">
-                      {transaction.person === 'pessoa1' ? person1Name : person2Name}
+                      {transaction.person}
                     </span>
                     <span className="text-xs text-muted-foreground">•</span>
                     <span className={cn(
@@ -184,8 +180,6 @@ export function TransactionList({
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSave={handleSave}
-        person1Name={person1Name}
-        person2Name={person2Name}
         expenseCategoryLabels={expenseCategoryLabels}
         incomeCategoryLabels={incomeCategoryLabels}
       />
