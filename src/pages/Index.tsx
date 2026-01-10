@@ -16,8 +16,13 @@ import { PeriodFilter } from '@/components/PeriodFilter';
 import { CumulativeChart } from '@/components/CumulativeChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImportExpensesDialog } from '@/components/ImportExpensesDialog';
+import { UserMenu } from '@/components/UserMenu';
+import { useAuth } from '@/hooks/useAuth';
+import { AuthModal } from '@/components/AuthModal';
 
 const Index = () => {
+  const { isAuthenticated, loading: authLoading, profile } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
@@ -71,6 +76,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <UserMenu />
               <PersonSettings
                 person1Name={person1Name}
                 person2Name={person2Name}
