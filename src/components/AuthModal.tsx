@@ -11,7 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, User, Mail, Lock } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, User, Mail, Lock, KeyRound } from 'lucide-react';
+
+const ACCESS_CODE = '0957';
 
 interface AuthModalProps {
   open: boolean;
@@ -22,6 +25,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -32,6 +36,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [signupUsername, setSignupUsername] = useState('');
+  const [accessCode, setAccessCode] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +54,15 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (accessCode !== ACCESS_CODE) {
+      toast({
+        title: 'Código de acesso inválido',
+        description: 'Por favor, insira o código de acesso correto para criar uma conta.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     if (signupPassword !== signupConfirmPassword) {
       return;
@@ -70,11 +84,13 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       setSignupPassword('');
       setSignupConfirmPassword('');
       setSignupUsername('');
+      setAccessCode('');
     }
   };
 
   const passwordsMatch = signupPassword === signupConfirmPassword;
   const passwordLongEnough = signupPassword.length >= 6;
+  const accessCodeValid = accessCode.length === 4;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -221,10 +237,32 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 )}
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="signup-access-code">Código de Acesso</Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signup-access-code"
+                    type="password"
+                    placeholder="Digite o código de 4 dígitos"
+                    value={accessCode}
+                    onChange={(e) => setAccessCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    className="pl-10"
+                    required
+                    maxLength={4}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Informe o código de acesso fornecido para criar sua conta
+                </p>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={loading || !passwordsMatch || !passwordLongEnough}
+                disabled={loading || !passwordsMatch || !passwordLongEnough || !accessCodeValid}
               >
                 {loading ? (
                   <>
