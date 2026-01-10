@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank } from 'lucide-react';
-import { useFinance } from '@/hooks/useFinance';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2 } from 'lucide-react';
+import { useTransactions } from '@/hooks/useTransactions';
 import { SummaryCard } from '@/components/SummaryCard';
 import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
 import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { ExpenseChart } from '@/components/ExpenseChart';
-
 import { Top10Expenses } from '@/components/Top10Expenses';
 import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
 import { PeriodFilter } from '@/components/PeriodFilter';
@@ -16,6 +15,7 @@ import { ImportExpensesDialog } from '@/components/ImportExpensesDialog';
 import { UserMenu } from '@/components/UserMenu';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthModal } from '@/components/AuthModal';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const { isAuthenticated, loading: authLoading, profile } = useAuth();
@@ -25,6 +25,7 @@ const Index = () => {
 
   const {
     transactions,
+    loading: transactionsLoading,
     totalIncome,
     totalExpenses,
     balance,
@@ -41,7 +42,7 @@ const Index = () => {
     monthlyComparison,
     biggestCategoryIncrease,
     monthlyBalanceSummary,
-  } = useFinance({ startDate, endDate });
+  } = useTransactions({ startDate, endDate });
 
   const handleClearFilter = () => {
     setStartDate(undefined);
@@ -49,6 +50,100 @@ const Index = () => {
   };
 
   const savingsOpportunities = categoryAnalysis.filter((c) => c.status === 'high');
+
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated - show login prompt
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="gradient-primary p-2.5 rounded-xl">
+                  <PiggyBank className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-foreground">Finanças do Casal</h1>
+                  <p className="text-sm text-muted-foreground">Controle e economia juntos</p>
+                </div>
+              </div>
+              <Button onClick={() => setShowAuthModal(true)} className="gradient-primary border-0">
+                Entrar
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-16">
+          <div className="max-w-2xl mx-auto text-center space-y-6">
+            <div className="gradient-primary p-4 rounded-2xl w-fit mx-auto">
+              <PiggyBank className="h-16 w-16 text-primary-foreground" />
+            </div>
+            <h2 className="text-3xl font-bold text-foreground">
+              Organize suas finanças juntos
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Controle seus gastos, identifique oportunidades de economia e alcance seus objetivos financeiros como casal ou família.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button 
+                size="lg" 
+                onClick={() => setShowAuthModal(true)}
+                className="gradient-primary border-0"
+              >
+                Criar conta grátis
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => setShowAuthModal(true)}
+              >
+                Já tenho conta
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12">
+              <div className="p-6 rounded-xl bg-card border border-border">
+                <TrendingUp className="h-8 w-8 text-income mb-4" />
+                <h3 className="font-semibold text-foreground mb-2">Controle de Receitas</h3>
+                <p className="text-sm text-muted-foreground">
+                  Registre todas as suas fontes de renda e acompanhe a evolução.
+                </p>
+              </div>
+              <div className="p-6 rounded-xl bg-card border border-border">
+                <TrendingDown className="h-8 w-8 text-expense mb-4" />
+                <h3 className="font-semibold text-foreground mb-2">Análise de Gastos</h3>
+                <p className="text-sm text-muted-foreground">
+                  Identifique onde seu dinheiro está indo e encontre oportunidades.
+                </p>
+              </div>
+              <div className="p-6 rounded-xl bg-card border border-border">
+                <Wallet className="h-8 w-8 text-primary mb-4" />
+                <h3 className="font-semibold text-foreground mb-2">Saldo em Tempo Real</h3>
+                <p className="text-sm text-muted-foreground">
+                  Veja seu saldo atualizado e tome decisões informadas.
+                </p>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,7 +157,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">Finanças do Casal</h1>
-                <p className="text-sm text-muted-foreground">Controle e economia juntos</p>
+                <p className="text-sm text-muted-foreground">Olá, {profile?.username || 'Usuário'}!</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -100,112 +195,140 @@ const Index = () => {
           />
         </section>
 
-        {/* Summary Cards */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SummaryCard
-            title="Receita Total"
-            value={totalIncome}
-            icon={TrendingUp}
-            variant="income"
-          />
-          <SummaryCard
-            title="Despesas Totais"
-            value={totalExpenses}
-            icon={TrendingDown}
-            variant="expense"
-          />
-          <SummaryCard
-            title="Saldo Total"
-            value={balance}
-            icon={Wallet}
-            variant="balance"
-          />
-        </section>
+        {/* Loading indicator for transactions */}
+        {transactionsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            {/* Summary Cards */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <SummaryCard
+                title="Receita Total"
+                value={totalIncome}
+                icon={TrendingUp}
+                variant="income"
+              />
+              <SummaryCard
+                title="Despesas Totais"
+                value={totalExpenses}
+                icon={TrendingDown}
+                variant="expense"
+              />
+              <SummaryCard
+                title="Saldo Total"
+                value={balance}
+                icon={Wallet}
+                variant="balance"
+              />
+            </section>
 
-        {/* Savings Alert */}
-        {savingsOpportunities.length > 0 && (
-          <section className="bg-warning/10 border border-warning/30 rounded-xl p-5 animate-fade-in">
-            <div className="flex items-start gap-3">
-              <div className="bg-warning/20 rounded-lg p-2">
-                <PiggyBank className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">
-                  Oportunidades de Economia Identificadas
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {savingsOpportunities.length === 1
-                    ? 'Encontramos 1 categoria com gastos acima do recomendado:'
-                    : `Encontramos ${savingsOpportunities.length} categorias com gastos acima do recomendado:`}
-                </p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {savingsOpportunities.map((opportunity) => (
-                    <span
-                      key={opportunity.category}
-                      className="px-3 py-1 bg-warning/20 text-warning-foreground rounded-full text-sm font-medium"
-                    >
-                      {opportunity.label} ({opportunity.percentage.toFixed(1)}%)
-                    </span>
-                  ))}
+            {/* Savings Alert */}
+            {savingsOpportunities.length > 0 && (
+              <section className="bg-warning/10 border border-warning/30 rounded-xl p-5 animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <div className="bg-warning/20 rounded-lg p-2">
+                    <PiggyBank className="h-5 w-5 text-warning" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      Oportunidades de Economia Identificadas
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {savingsOpportunities.length === 1
+                        ? 'Encontramos 1 categoria com gastos acima do recomendado:'
+                        : `Encontramos ${savingsOpportunities.length} categorias com gastos acima do recomendado:`}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {savingsOpportunities.map((opportunity) => (
+                        <span
+                          key={opportunity.category}
+                          className="px-3 py-1 bg-warning/20 text-warning-foreground rounded-full text-sm font-medium"
+                        >
+                          {opportunity.label} ({opportunity.percentage.toFixed(1)}%)
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </section>
+              </section>
+            )}
+
+            {/* Empty state */}
+            {transactions.length === 0 && (
+              <section className="text-center py-12">
+                <div className="max-w-md mx-auto space-y-4">
+                  <div className="bg-muted/50 p-4 rounded-full w-fit mx-auto">
+                    <PiggyBank className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">
+                    Nenhuma transação ainda
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Comece adicionando sua primeira transação para visualizar seus dados financeiros.
+                  </p>
+                </div>
+              </section>
+            )}
+
+            {/* Tabs - only show if there are transactions */}
+            {transactions.length > 0 && (
+              <Tabs defaultValue="overview" className="space-y-6">
+                <TabsList className="grid w-full grid-cols-2 max-w-lg">
+                  <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+                  <TabsTrigger value="comparison">Comparativo</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-6">
+                  {/* Cumulative Evolution Chart */}
+                  <section>
+                    <CumulativeChart transactions={transactions} />
+                  </section>
+
+                  {/* Charts and Analysis */}
+                  <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <ExpenseChart data={categoryAnalysis} />
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-semibold text-foreground">Análise por Categoria</h2>
+                      <div className="max-h-[340px] overflow-y-auto">
+                        <CategoryAnalysisTable analysisData={categoryAnalysis} />
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Top 10 Expenses */}
+                  <section>
+                    <Top10Expenses
+                      expenses={top10Expenses}
+                      expenseCategoryLabels={expenseCategoryLabels}
+                    />
+                  </section>
+
+                  {/* Transactions */}
+                  <section>
+                    <TransactionList
+                      transactions={transactions}
+                      onDelete={deleteTransaction}
+                      onUpdate={updateTransaction}
+                      expenseCategoryLabels={expenseCategoryLabels}
+                      incomeCategoryLabels={incomeCategoryLabels}
+                    />
+                  </section>
+                </TabsContent>
+
+                <TabsContent value="comparison">
+                  <MonthlyComparisonTab
+                    monthlyData={monthlyComparison}
+                    biggestIncrease={biggestCategoryIncrease}
+                    expenseCategoryLabels={expenseCategoryLabels}
+                    monthlyBalanceSummary={monthlyBalanceSummary}
+                  />
+                </TabsContent>
+              </Tabs>
+            )}
+          </>
         )}
-
-        {/* Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-lg">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="comparison">Comparativo</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* Cumulative Evolution Chart */}
-            <section>
-              <CumulativeChart transactions={transactions} />
-            </section>
-
-            {/* Charts and Analysis */}
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ExpenseChart data={categoryAnalysis} />
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-foreground">Análise por Categoria</h2>
-                <div className="max-h-[340px] overflow-y-auto">
-                  <CategoryAnalysisTable analysisData={categoryAnalysis} />
-                </div>
-              </div>
-            </section>
-
-            {/* Top 10 Expenses */}
-            <section>
-              <Top10Expenses
-                expenses={top10Expenses}
-                expenseCategoryLabels={expenseCategoryLabels}
-              />
-            </section>
-
-            {/* Transactions */}
-            <section>
-              <TransactionList
-                transactions={transactions}
-                onDelete={deleteTransaction}
-                onUpdate={updateTransaction}
-                expenseCategoryLabels={expenseCategoryLabels}
-                incomeCategoryLabels={incomeCategoryLabels}
-              />
-            </section>
-          </TabsContent>
-
-          <TabsContent value="comparison">
-            <MonthlyComparisonTab
-              monthlyData={monthlyComparison}
-              biggestIncrease={biggestCategoryIncrease}
-              expenseCategoryLabels={expenseCategoryLabels}
-              monthlyBalanceSummary={monthlyBalanceSummary}
-            />
-          </TabsContent>
-        </Tabs>
       </main>
 
       {/* Footer */}
