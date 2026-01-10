@@ -1,4 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Transaction, 
   ExpenseCategory, 
@@ -9,10 +12,9 @@ import {
   defaultIncomeCategoryLabels,
   MonthlyComparison,
   CategoryChange,
-  SplitCalculation,
   MonthlyBalanceSummary
 } from '@/types/finance';
-import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export interface PeriodFilter {
@@ -20,14 +22,85 @@ export interface PeriodFilter {
   endDate: Date | undefined;
 }
 
-const initialTransactions: Transaction[] = [];
+interface DbTransaction {
+  id: string;
+  user_id: string;
+  type: string;
+  category: string;
+  description: string;
+  tag: string | null;
+  amount: number;
+  person: string;
+  date: string;
+  recurrence: string | null;
+  include_in_split: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
-export function useFinance(periodFilter?: PeriodFilter) {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
-  const [person1Name, setPerson1Name] = useState('Pessoa 1');
-  const [person2Name, setPerson2Name] = useState('Pessoa 2');
+const mapDbToTransaction = (db: DbTransaction): Transaction => ({
+  id: db.id,
+  type: db.type as 'income' | 'expense',
+  category: db.category,
+  description: db.description,
+  tag: db.tag || undefined,
+  amount: Number(db.amount),
+  person: db.person,
+  date: new Date(db.date),
+  recurrence: (db.recurrence || 'pontual') as 'pontual' | 'recorrente',
+  includeInSplit: db.include_in_split,
+});
+
+export function useTransactions(periodFilter?: PeriodFilter) {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [customExpenseCategories, setCustomExpenseCategories] = useState<Record<string, string>>({});
   const [customIncomeCategories, setCustomIncomeCategories] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
+
+  // Fetch transactions from Supabase
+  const fetchTransactions = useCallback(async () => {
+    if (!user) {
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching transactions:', error);
+        toast({
+          title: 'Erro ao carregar transações',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const mapped = (data || []).map(mapDbToTransaction);
+      setTransactions(mapped);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchTransactions();
+    } else {
+      setTransactions([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated, fetchTransactions]);
 
   // Filter transactions by period
   const filteredTransactions = useMemo(() => {
@@ -56,6 +129,7 @@ export function useFinance(periodFilter?: PeriodFilter) {
       return true;
     });
   }, [transactions, periodFilter?.startDate, periodFilter?.endDate]);
+
   const expenseCategoryLabels = useMemo(() => ({
     ...defaultExpenseCategoryLabels,
     ...customExpenseCategories,
@@ -135,7 +209,6 @@ export function useFinance(periodFilter?: PeriodFilter) {
       return [];
     }
 
-    // Find all unique year-months from transactions
     const uniqueMonths = new Map<string, { date: Date; label: string }>();
 
     expenseTransactions.forEach(t => {
@@ -149,7 +222,6 @@ export function useFinance(periodFilter?: PeriodFilter) {
       }
     });
 
-    // Sort months chronologically and take last 6
     const sortedMonths = Array.from(uniqueMonths.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .slice(-6);
@@ -257,123 +329,183 @@ export function useFinance(periodFilter?: PeriodFilter) {
     return biggestChange;
   }, [monthlyComparison, expenseCategoryLabels]);
 
-  const incomeByPerson = useMemo(() => {
-    const person1Income = filteredTransactions
-      .filter(t => t.type === 'income' && t.person === 'pessoa1')
-      .reduce((sum, t) => sum + t.amount, 0);
-    const person2Income = filteredTransactions
-      .filter(t => t.type === 'income' && t.person === 'pessoa2')
-      .reduce((sum, t) => sum + t.amount, 0);
-    return { pessoa1: person1Income, pessoa2: person2Income };
-  }, [filteredTransactions]);
-
-  const expensesByPerson = useMemo(() => {
-    const person1Expenses = filteredTransactions
-      .filter(t => t.type === 'expense' && t.person === 'pessoa1')
-      .reduce((sum, t) => sum + t.amount, 0);
-    const person2Expenses = filteredTransactions
-      .filter(t => t.type === 'expense' && t.person === 'pessoa2')
-      .reduce((sum, t) => sum + t.amount, 0);
-    return { pessoa1: person1Expenses, pessoa2: person2Expenses };
-  }, [filteredTransactions]);
-
-  const splitCalculation = useMemo((): SplitCalculation => {
-    const person1Income = incomeByPerson.pessoa1;
-    const person2Income = incomeByPerson.pessoa2;
-    const totalIncomeCalc = person1Income + person2Income;
-
-    // Calculate income contribution percentages
-    const person1IncomePercentage = totalIncomeCalc > 0 ? (person1Income / totalIncomeCalc) * 100 : 50;
-    const person2IncomePercentage = totalIncomeCalc > 0 ? (person2Income / totalIncomeCalc) * 100 : 50;
-
-    // Get only shared expenses (includeInSplit = true)
-    const sharedExpenses = filteredTransactions.filter(t => t.type === 'expense' && t.includeInSplit);
-    const totalSharedExpenses = sharedExpenses.reduce((sum, t) => sum + t.amount, 0);
-
-    // Calculate ideal share based on income percentage
-    const person1IdealShare = (person1IncomePercentage / 100) * totalSharedExpenses;
-    const person2IdealShare = (person2IncomePercentage / 100) * totalSharedExpenses;
-
-    // Calculate actual paid amounts for shared expenses
-    const person1ActualPaid = sharedExpenses
-      .filter(t => t.person === 'pessoa1')
-      .reduce((sum, t) => sum + t.amount, 0);
-    const person2ActualPaid = sharedExpenses
-      .filter(t => t.person === 'pessoa2')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    // Calculate expense-to-income ratio for each person (based on actual shared expenses paid)
-    const person1ExpenseToIncomeRatio = person1Income > 0 ? (person1ActualPaid / person1Income) * 100 : 0;
-    const person2ExpenseToIncomeRatio = person2Income > 0 ? (person2ActualPaid / person2Income) * 100 : 0;
-
-    // Calculate settlement
-    const person1Difference = person1ActualPaid - person1IdealShare;
-
-    let settlement: SplitCalculation['settlement'] = {
-      fromPerson: null,
-      toPerson: null,
-      amount: 0,
-    };
-
-    if (Math.abs(person1Difference) > 0.01) {
-      if (person1Difference > 0) {
-        // Person 1 paid more than their ideal share
-        settlement = {
-          fromPerson: 'pessoa2',
-          toPerson: 'pessoa1',
-          amount: person1Difference,
-        };
-      } else {
-        // Person 2 paid more than their ideal share
-        settlement = {
-          fromPerson: 'pessoa1',
-          toPerson: 'pessoa2',
-          amount: Math.abs(person1Difference),
-        };
-      }
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Você precisa estar logado para adicionar transações.',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    return {
-      person1IncomePercentage,
-      person2IncomePercentage,
-      totalSharedExpenses,
-      person1IdealShare,
-      person2IdealShare,
-      person1ActualPaid,
-      person2ActualPaid,
-      person1ExpenseToIncomeRatio,
-      person2ExpenseToIncomeRatio,
-      settlement,
-    };
-  }, [filteredTransactions, incomeByPerson]);
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          type: transaction.type,
+          category: transaction.category,
+          description: transaction.description,
+          tag: transaction.tag || null,
+          amount: transaction.amount,
+          person: transaction.person,
+          date: format(transaction.date, 'yyyy-MM-dd'),
+          recurrence: transaction.recurrence,
+          include_in_split: transaction.includeInSplit,
+        })
+        .select()
+        .single();
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now().toString(),
-    };
-    setTransactions(prev => [...prev, newTransaction]);
+      if (error) {
+        console.error('Error adding transaction:', error);
+        toast({
+          title: 'Erro ao adicionar transação',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newTransaction = mapDbToTransaction(data);
+      setTransactions(prev => [newTransaction, ...prev]);
+      
+      toast({
+        title: 'Transação adicionada!',
+        description: `${transaction.description} foi registrada.`,
+      });
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+    }
   };
 
-  const addMultipleTransactions = (transactions: Omit<Transaction, 'id'>[]) => {
-    const newTransactions: Transaction[] = transactions.map((t, index) => ({
-      ...t,
-      id: (Date.now() + index).toString(),
-    }));
-    setTransactions(prev => [...prev, ...newTransactions]);
+  const addMultipleTransactions = async (transactionsToAdd: Omit<Transaction, 'id'>[]) => {
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Você precisa estar logado para adicionar transações.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const inserts = transactionsToAdd.map(t => ({
+        user_id: user.id,
+        type: t.type,
+        category: t.category,
+        description: t.description,
+        tag: t.tag || null,
+        amount: t.amount,
+        person: t.person,
+        date: format(t.date, 'yyyy-MM-dd'),
+        recurrence: t.recurrence,
+        include_in_split: t.includeInSplit,
+      }));
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert(inserts)
+        .select();
+
+      if (error) {
+        console.error('Error adding transactions:', error);
+        toast({
+          title: 'Erro ao adicionar transações',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newTransactions = (data || []).map(mapDbToTransaction);
+      setTransactions(prev => [...newTransactions, ...prev]);
+      
+      toast({
+        title: 'Transações adicionadas!',
+        description: `${transactionsToAdd.length} transações foram registradas.`,
+      });
+    } catch (error) {
+      console.error('Error adding transactions:', error);
+    }
   };
 
-  const updateTransaction = (transaction: Transaction) => {
-    setTransactions(prev => prev.map(t => t.id === transaction.id ? transaction : t));
+  const updateTransaction = async (transaction: Transaction) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .update({
+          type: transaction.type,
+          category: transaction.category,
+          description: transaction.description,
+          tag: transaction.tag || null,
+          amount: transaction.amount,
+          person: transaction.person,
+          date: format(transaction.date, 'yyyy-MM-dd'),
+          recurrence: transaction.recurrence,
+          include_in_split: transaction.includeInSplit,
+        })
+        .eq('id', transaction.id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating transaction:', error);
+        toast({
+          title: 'Erro ao atualizar transação',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setTransactions(prev => prev.map(t => t.id === transaction.id ? transaction : t));
+      
+      toast({
+        title: 'Transação atualizada!',
+        description: `${transaction.description} foi atualizada.`,
+      });
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+    }
   };
 
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
+  const deleteTransaction = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error deleting transaction:', error);
+        toast({
+          title: 'Erro ao excluir transação',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setTransactions(prev => prev.filter(t => t.id !== id));
+      
+      toast({
+        title: 'Transação excluída!',
+        description: 'A transação foi removida.',
+      });
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    }
   };
 
   return {
     transactions: filteredTransactions,
     allTransactions: transactions,
+    loading,
     totalIncome,
     totalExpenses,
     balance,
@@ -382,12 +514,6 @@ export function useFinance(periodFilter?: PeriodFilter) {
     addMultipleTransactions,
     updateTransaction,
     deleteTransaction,
-    person1Name,
-    person2Name,
-    setPerson1Name,
-    setPerson2Name,
-    incomeByPerson,
-    expensesByPerson,
     expenseCategoryLabels,
     incomeCategoryLabels,
     addExpenseCategory,
@@ -395,7 +521,7 @@ export function useFinance(periodFilter?: PeriodFilter) {
     top10Expenses,
     monthlyComparison,
     biggestCategoryIncrease,
-    splitCalculation,
     monthlyBalanceSummary,
+    refetch: fetchTransactions,
   };
 }
