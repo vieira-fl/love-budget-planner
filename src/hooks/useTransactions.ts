@@ -6,6 +6,7 @@ import {
   Transaction, 
   ExpenseCategory, 
   CategoryAnalysis,
+  SplitCalculation,
   categoryThresholds,
   defaultThreshold,
   defaultExpenseCategoryLabels,
@@ -341,6 +342,117 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     return biggestChange;
   }, [monthlyComparison, expenseCategoryLabels]);
 
+  // Get unique people from transactions
+  const uniquePeople = useMemo(() => {
+    const people = new Set(filteredTransactions.map(t => t.person));
+    return Array.from(people).sort();
+  }, [filteredTransactions]);
+
+  // Calculate income and expenses per person
+  const personSummaries = useMemo(() => {
+    const summaries: Record<string, { income: number; expenses: number }> = {};
+    
+    filteredTransactions.forEach(t => {
+      if (!summaries[t.person]) {
+        summaries[t.person] = { income: 0, expenses: 0 };
+      }
+      if (t.type === 'income') {
+        summaries[t.person].income += t.amount;
+      } else {
+        summaries[t.person].expenses += t.amount;
+      }
+    });
+    
+    return summaries;
+  }, [filteredTransactions]);
+
+  // Calculate split calculation for the couple
+  const splitCalculation = useMemo((): SplitCalculation | null => {
+    if (uniquePeople.length < 2) return null;
+    
+    const person1 = uniquePeople[0];
+    const person2 = uniquePeople[1];
+    
+    const person1Summary = personSummaries[person1] || { income: 0, expenses: 0 };
+    const person2Summary = personSummaries[person2] || { income: 0, expenses: 0 };
+    
+    const person1Income = person1Summary.income;
+    const person2Income = person2Summary.income;
+    const totalIncome = person1Income + person2Income;
+    
+    // Calculate income percentage
+    const person1IncomePercentage = totalIncome > 0 ? (person1Income / totalIncome) * 100 : 50;
+    const person2IncomePercentage = totalIncome > 0 ? (person2Income / totalIncome) * 100 : 50;
+    
+    // Get shared expenses (marked for split)
+    const sharedExpenses = filteredTransactions.filter(t => 
+      t.type === 'expense' && t.includeInSplit
+    );
+    
+    const totalSharedExpenses = sharedExpenses.reduce((sum, t) => sum + t.amount, 0);
+    
+    // Calculate ideal share based on income percentage
+    const person1IdealShare = totalSharedExpenses * (person1IncomePercentage / 100);
+    const person2IdealShare = totalSharedExpenses * (person2IncomePercentage / 100);
+    
+    // Calculate actual paid
+    const person1ActualPaid = sharedExpenses
+      .filter(t => t.person === person1)
+      .reduce((sum, t) => sum + t.amount, 0);
+    const person2ActualPaid = sharedExpenses
+      .filter(t => t.person === person2)
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    // Calculate expense to income ratio
+    const person1ExpenseToIncomeRatio = person1Income > 0 
+      ? (person1ActualPaid / person1Income) * 100 
+      : 0;
+    const person2ExpenseToIncomeRatio = person2Income > 0 
+      ? (person2ActualPaid / person2Income) * 100 
+      : 0;
+    
+    // Calculate settlement
+    const person1Difference = person1ActualPaid - person1IdealShare;
+    const person2Difference = person2ActualPaid - person2IdealShare;
+    
+    let settlement: SplitCalculation['settlement'] = {
+      fromPerson: null,
+      toPerson: null,
+      amount: 0,
+    };
+    
+    if (Math.abs(person1Difference) > 0.01) {
+      if (person1Difference > 0) {
+        // Person 1 paid more than ideal, Person 2 should pay Person 1
+        settlement = {
+          fromPerson: 'pessoa2',
+          toPerson: 'pessoa1',
+          amount: person1Difference,
+        };
+      } else {
+        // Person 2 paid more than ideal, Person 1 should pay Person 2
+        settlement = {
+          fromPerson: 'pessoa1',
+          toPerson: 'pessoa2',
+          amount: -person1Difference,
+        };
+      }
+    }
+    
+    return {
+      person1IncomePercentage,
+      person2IncomePercentage,
+      totalSharedExpenses,
+      person1IdealShare,
+      person2IdealShare,
+      person1ActualPaid,
+      person2ActualPaid,
+      person1ExpenseToIncomeRatio,
+      person2ExpenseToIncomeRatio,
+      settlement,
+    };
+  }, [filteredTransactions, uniquePeople, personSummaries]);
+
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) {
       toast({
@@ -533,5 +645,8 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     biggestCategoryIncrease,
     monthlyBalanceSummary,
     refetch: fetchTransactions,
+    splitCalculation,
+    uniquePeople,
+    personSummaries,
   };
 }
