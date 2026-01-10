@@ -10,8 +10,7 @@ import { FileUp, Info, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface ImportExpensesDialogProps {
   onImport: (transactions: Omit<Transaction, 'id'>[]) => void;
-  person1Name: string;
-  person2Name: string;
+  username: string;
   expenseCategoryLabels: Record<string, string>;
 }
 
@@ -95,8 +94,7 @@ const parseAmount = (value: string) => parseFloat(value.replace(/\./g, '').repla
 
 export function ImportExpensesDialog({
   onImport,
-  person1Name,
-  person2Name,
+  username,
   expenseCategoryLabels,
 }: ImportExpensesDialogProps) {
   const [open, setOpen] = useState(false);
@@ -108,17 +106,6 @@ export function ImportExpensesDialog({
     () => Object.values(expenseCategoryLabels).join(', '),
     [expenseCategoryLabels]
   );
-
-  const resolvePerson = (value: string): 'pessoa1' | 'pessoa2' | null => {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === 'pessoa1' || normalized === 'p1' || normalized === person1Name.trim().toLowerCase()) {
-      return 'pessoa1';
-    }
-    if (normalized === 'pessoa2' || normalized === 'p2' || normalized === person2Name.trim().toLowerCase()) {
-      return 'pessoa2';
-    }
-    return null;
-  };
 
   const parseCsv = (content: string): ParsedResult => {
     const lines = content
@@ -148,17 +135,10 @@ export function ImportExpensesDialog({
       const row = line.split(delimiter);
       const description = getValue(row, 'descricao') ?? getValue(row, 'descricao_da_despesa');
       const amountValue = getValue(row, 'valor') ?? getValue(row, 'valor_da_despesa');
-      const personValue = getValue(row, 'pessoa') ?? getValue(row, 'pago_por');
       const dateValue = getValue(row, 'data');
 
-      if (!description || !amountValue || !personValue || !dateValue) {
+      if (!description || !amountValue || !dateValue) {
         errors.push(`Linha ${index + 2}: dados obrigatórios ausentes.`);
-        return;
-      }
-
-      const person = resolvePerson(personValue);
-      if (!person) {
-        errors.push(`Linha ${index + 2}: pessoa "${personValue}" não reconhecida.`);
         return;
       }
 
@@ -183,7 +163,7 @@ export function ImportExpensesDialog({
         category,
         description,
         amount,
-        person,
+        person: username,
         date,
         recurrence,
         includeInSplit,
@@ -258,10 +238,10 @@ export function ImportExpensesDialog({
             <Info className="h-4 w-4" />
             <AlertTitle>Formato esperado</AlertTitle>
             <AlertDescription className="space-y-1 text-sm text-muted-foreground">
-              <p>Inclua as colunas: <strong>descricao</strong>, <strong>valor</strong>, <strong>categoria</strong>, <strong>pessoa</strong>, <strong>data</strong>, <strong>recorrencia</strong>, <strong>incluir_no_rateio</strong>.</p>
+              <p>Inclua as colunas: <strong>descricao</strong>, <strong>valor</strong>, <strong>categoria</strong>, <strong>data</strong>, <strong>recorrencia</strong>, <strong>incluir_no_rateio</strong>.</p>
               <p>Use datas no formato AAAA-MM-DD ou DD/MM/AA(AA) e valores numéricos com vírgula ou ponto.</p>
               <p>O arquivo pode ser separado por vírgula, ponto e vírgula ou tabulação.</p>
-              <p>Informe a pessoa como "pessoa1"/{person1Name} ou "pessoa2"/{person2Name}.</p>
+              <p>Todas as despesas serão atribuídas ao usuário logado: <strong>{username}</strong>.</p>
             </AlertDescription>
           </Alert>
 

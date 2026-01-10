@@ -14,8 +14,6 @@ interface EditTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (transaction: Transaction) => void;
-  person1Name: string;
-  person2Name: string;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
 }
@@ -25,8 +23,6 @@ export function EditTransactionDialog({
   open,
   onOpenChange,
   onSave, 
-  person1Name, 
-  person2Name,
   expenseCategoryLabels,
   incomeCategoryLabels,
 }: EditTransactionDialogProps) {
@@ -35,7 +31,6 @@ export function EditTransactionDialog({
   const [description, setDescription] = useState('');
   const [tag, setTag] = useState('');
   const [amount, setAmount] = useState('');
-  const [person, setPerson] = useState<'pessoa1' | 'pessoa2'>('pessoa1');
   const [date, setDate] = useState('');
   const [recurrence, setRecurrence] = useState<RecurrenceType>('pontual');
   const [includeInSplit, setIncludeInSplit] = useState(true);
@@ -47,7 +42,6 @@ export function EditTransactionDialog({
       setDescription(transaction.description);
       setTag(transaction.tag || '');
       setAmount(transaction.amount.toString());
-      setPerson(transaction.person);
       setDate(format(new Date(transaction.date), 'yyyy-MM-dd'));
       setRecurrence(transaction.recurrence);
       setIncludeInSplit(transaction.includeInSplit);
@@ -66,7 +60,6 @@ export function EditTransactionDialog({
       description,
       tag: tag.trim() || undefined,
       amount: parseFloat(amount),
-      person,
       date: new Date(date),
       recurrence,
       includeInSplit: type === 'expense' ? includeInSplit : false,
@@ -184,32 +177,17 @@ export function EditTransactionDialog({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-foreground">Pessoa</Label>
-              <Select value={person} onValueChange={(value) => setPerson(value as 'pessoa1' | 'pessoa2')}>
-                <SelectTrigger className="bg-background border-input">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pessoa1">{person1Name}</SelectItem>
-                  <SelectItem value="pessoa2">{person2Name}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-foreground">Tipo</Label>
-              <Select value={recurrence} onValueChange={(value) => setRecurrence(value as RecurrenceType)}>
-                <SelectTrigger className="bg-background border-input">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pontual">Pontual</SelectItem>
-                  <SelectItem value="recorrente">Recorrente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label className="text-foreground">Tipo</Label>
+            <Select value={recurrence} onValueChange={(value) => setRecurrence(value as RecurrenceType)}>
+              <SelectTrigger className="bg-background border-input">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pontual">Pontual</SelectItem>
+                <SelectItem value="recorrente">Recorrente</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
