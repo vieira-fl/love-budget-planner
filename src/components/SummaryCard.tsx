@@ -17,8 +17,7 @@ export function SummaryCard({ title, value, icon: Icon, variant, className }: Su
     }).format(amount);
   };
 
-  const isPositiveBalance = variant === 'balance' && value >= 0;
-  const isNegativeBalance = variant === 'balance' && value < 0;
+  const isBalance = variant === 'balance';
 
   return (
     <div
@@ -37,8 +36,7 @@ export function SummaryCard({ title, value, icon: Icon, variant, className }: Su
               'text-2xl font-bold tracking-tight',
               variant === 'income' && 'text-income',
               variant === 'expense' && 'text-expense',
-              isPositiveBalance && 'text-balance-positive',
-              isNegativeBalance && 'text-balance-negative'
+              isBalance && 'text-balance'
             )}
           >
             {formatCurrency(value)}
@@ -49,8 +47,7 @@ export function SummaryCard({ title, value, icon: Icon, variant, className }: Su
             'rounded-lg p-3',
             variant === 'income' && 'bg-income/10',
             variant === 'expense' && 'bg-expense/10',
-            isPositiveBalance && 'bg-balance-positive/10',
-            isNegativeBalance && 'bg-balance-negative/10'
+            isBalance && 'bg-balance/10'
           )}
         >
           <Icon
@@ -58,8 +55,7 @@ export function SummaryCard({ title, value, icon: Icon, variant, className }: Su
               'h-5 w-5',
               variant === 'income' && 'text-income',
               variant === 'expense' && 'text-expense',
-              isPositiveBalance && 'text-balance-positive',
-              isNegativeBalance && 'text-balance-negative'
+              isBalance && 'text-balance'
             )}
           />
         </div>

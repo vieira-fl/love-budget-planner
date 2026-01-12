@@ -113,9 +113,8 @@ export function CumulativeChart({ transactions }: CumulativeChartProps) {
 
   const chartData = xAxisUnit === 'daily' ? dailyData : monthlyData;
 
-  // Determine if final balance is positive or negative for line color
-  const finalBalance = chartData.length > 0 ? chartData[chartData.length - 1].cumulativeBalance : 0;
-  const balanceColor = finalBalance >= 0 ? 'hsl(210 80% 50%)' : 'hsl(0 65% 40%)';
+  // Always use blue for balance
+  const balanceColor = 'hsl(var(--balance))';
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
