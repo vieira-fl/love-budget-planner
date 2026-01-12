@@ -11,6 +11,7 @@ import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
 import { PeriodFilter } from '@/components/PeriodFilter';
 import { CumulativeChart } from '@/components/CumulativeChart';
 import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
+import { SplitCategoryBreakdown } from '@/components/SplitCategoryBreakdown';
 import { DetailedSplitCard } from '@/components/DetailedSplitCard';
 import { PersonSummaryCard } from '@/components/PersonSummaryCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -358,6 +359,16 @@ const Index = () => {
                           splitCalculation={splitCalculation}
                           person1Name={uniquePeople[0]}
                           person2Name={uniquePeople[1]}
+                        />
+                      </section>
+
+                      {/* Category and Person Breakdown */}
+                      <section>
+                        <SplitCategoryBreakdown
+                          transactions={transactions}
+                          splitCalculation={splitCalculation}
+                          expenseCategoryLabels={expenseCategoryLabels}
+                          uniquePeople={uniquePeople}
                         />
                       </section>
 

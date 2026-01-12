@@ -165,56 +165,110 @@ export function DetailedSplitCard({
 
       {/* Personal Expenses (Not in Split) */}
       {personalExpenses.length > 0 && (
-        <Card className="bg-card card-shadow">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-muted-foreground" />
-              Despesas Fora do Rateio
-              <Badge variant="outline" className="ml-2">
-                {personalExpenses.length} itens
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {personalExpenses.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(expense.date), 'dd/MM', { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="font-medium">{expense.description}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {expenseCategoryLabels[expense.category] || expense.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="default" className="text-xs">
-                          {expense.person}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatCurrency(expense.amount)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        <PersonalExpensesList
+          personalExpenses={personalExpenses}
+          expenseCategoryLabels={expenseCategoryLabels}
+          formatCurrency={formatCurrency}
+        />
       )}
     </div>
+  );
+}
+
+interface PersonalExpensesListProps {
+  personalExpenses: Transaction[];
+  expenseCategoryLabels: Record<string, string>;
+  formatCurrency: (value: number) => string;
+}
+
+function PersonalExpensesList({
+  personalExpenses,
+  expenseCategoryLabels,
+  formatCurrency,
+}: PersonalExpensesListProps) {
+  // Calculate totals per person
+  const personTotals = useMemo(() => {
+    const totals = new Map<string, number>();
+    personalExpenses.forEach(expense => {
+      totals.set(expense.person, (totals.get(expense.person) || 0) + expense.amount);
+    });
+    return Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
+  }, [personalExpenses]);
+
+  const grandTotal = personalExpenses.reduce((sum, t) => sum + t.amount, 0);
+
+  return (
+    <Card className="bg-card card-shadow">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <XCircle className="h-5 w-5 text-muted-foreground" />
+          Despesas Fora do Rateio
+          <Badge variant="outline" className="ml-2">
+            {personalExpenses.length} itens
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Responsável</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {personalExpenses.map((expense) => (
+                <TableRow key={expense.id}>
+                  <TableCell className="text-muted-foreground">
+                    {format(new Date(expense.date), 'dd/MM', { locale: ptBR })}
+                  </TableCell>
+                  <TableCell className="font-medium">{expense.description}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {expenseCategoryLabels[expense.category] || expense.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="default" className="text-xs">
+                      {expense.person}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(expense.amount)}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {/* Person totals */}
+              {personTotals.map(([person, total]) => (
+                <TableRow key={`total-${person}`} className="bg-muted/30">
+                  <TableCell colSpan={3} className="text-muted-foreground">
+                    Subtotal
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="default" className="text-xs">
+                      {person}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(total)}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {/* Grand total */}
+              <TableRow className="bg-muted/50 font-semibold">
+                <TableCell colSpan={4}>Total Fora do Rateio</TableCell>
+                <TableCell className="text-right">
+                  {formatCurrency(grandTotal)}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -52,13 +52,10 @@ export function PersonSummaryCard({ personName, income, expenses, variant }: Per
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-1 text-muted-foreground">
-              <Wallet className="h-3 w-3" />
+              <Wallet className="h-3 w-3 text-balance" />
               <span className="text-xs">Saldo</span>
             </div>
-            <p className={cn(
-              "text-lg font-bold",
-              balance >= 0 ? 'text-income' : 'text-expense'
-            )}>
+            <p className="text-lg font-bold text-balance">
               {formatCurrency(balance)}
             </p>
           </div>

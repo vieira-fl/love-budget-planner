@@ -210,7 +210,7 @@ export function MonthlyComparisonTab({ monthlyData, biggestIncrease, expenseCate
                   }} />
                   <Bar dataKey="income" fill="hsl(var(--income))" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="expenses" fill="hsl(var(--expense))" radius={[4, 4, 0, 0]} />
-                  <Line type="monotone" dataKey="balance" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="balance" stroke="hsl(var(--balance))" strokeWidth={3} dot={{ r: 4, fill: 'hsl(var(--balance))' }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
