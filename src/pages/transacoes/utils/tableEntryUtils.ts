@@ -40,16 +40,20 @@ export const isValidDatePtBr = (dateStr: string): boolean => {
 };
 
 export const sanitizeBRLInput = (raw: string): string => {
+  // Preserve negative sign at the beginning
+  const isNegative = raw.trim().startsWith("-");
   const cleaned = raw.replace(/[^\d,\.]/g, "");
   const firstCommaIndex = cleaned.indexOf(",");
+  
+  let result: string;
   if (firstCommaIndex === -1) {
-    return cleaned;
+    result = cleaned;
+  } else {
+    result = cleaned.slice(0, firstCommaIndex + 1) +
+      cleaned.slice(firstCommaIndex + 1).replace(/,/g, "");
   }
-
-  return (
-    cleaned.slice(0, firstCommaIndex + 1) +
-    cleaned.slice(firstCommaIndex + 1).replace(/,/g, "")
-  );
+  
+  return isNegative ? `-${result}` : result;
 };
 
 export const parseBRL = (input: string): number | null => {
@@ -58,7 +62,11 @@ export const parseBRL = (input: string): number | null => {
     return null;
   }
 
-  const cleaned = trimmed.replace(/[^\d,\.]/g, "");
+  // Check for negative sign
+  const isNegative = trimmed.startsWith("-");
+  const withoutSign = isNegative ? trimmed.slice(1) : trimmed;
+
+  const cleaned = withoutSign.replace(/[^\d,\.]/g, "");
   const digitsOnly = cleaned.replace(/[^\d]/g, "");
   if (!cleaned) {
     return null;
@@ -69,6 +77,8 @@ export const parseBRL = (input: string): number | null => {
 
   const hasComma = cleaned.includes(",");
 
+  let parsed: number | null = null;
+
   if (hasComma) {
     const [integerPart, decimalPart = ""] = cleaned.split(",", 2);
     const integerDigits = integerPart.replace(/\./g, "");
@@ -76,21 +86,31 @@ export const parseBRL = (input: string): number | null => {
     const normalized = decimalDigits
       ? `${integerDigits}.${decimalDigits}`
       : integerDigits;
-    const parsed = Number(normalized);
-    return Number.isNaN(parsed) ? null : parsed;
-  }
+    parsed = Number(normalized);
+    if (Number.isNaN(parsed)) {
+      return null;
+    }
+  } else {
+    const dotMatches = cleaned.match(/\./g) || [];
+    if (dotMatches.length === 1) {
+      const [integerPart, decimalPart = ""] = cleaned.split(".");
+      if (decimalPart.length === 2) {
+        parsed = Number(`${integerPart}.${decimalPart}`);
+        if (Number.isNaN(parsed)) {
+          return null;
+        }
+      }
+    }
 
-  const dotMatches = cleaned.match(/\./g) || [];
-  if (dotMatches.length === 1) {
-    const [integerPart, decimalPart = ""] = cleaned.split(".");
-    if (decimalPart.length === 2) {
-      const parsed = Number(`${integerPart}.${decimalPart}`);
-      return Number.isNaN(parsed) ? null : parsed;
+    if (parsed === null) {
+      parsed = Number(cleaned.replace(/\./g, ""));
+      if (Number.isNaN(parsed)) {
+        return null;
+      }
     }
   }
 
-  const parsed = Number(cleaned.replace(/\./g, ""));
-  return Number.isNaN(parsed) ? null : parsed;
+  return isNegative ? -parsed : parsed;
 };
 
 export const formatBRLDisplay = (value: string): string => {
@@ -99,10 +119,13 @@ export const formatBRLDisplay = (value: string): string => {
     return value;
   }
 
-  return parsed.toLocaleString("pt-BR", {
+  // Format preserving negative sign
+  const formatted = Math.abs(parsed).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+  return parsed < 0 ? `-${formatted}` : formatted;
 };
 
 export const normalizeTextOption = (value: string): string => {
