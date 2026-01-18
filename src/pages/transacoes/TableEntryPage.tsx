@@ -1,11 +1,16 @@
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { ArrowLeft, Plus, Upload, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
+import { EditableTable } from "./components/EditableTable";
+import { ErrorsModal, SuccessModal, ClearConfirmModal } from "./components/ValidationModals";
+import { useTableEntry } from "./hooks/useTableEntry";
+import { ValidationResult } from "./types";
 
 // Error Boundary for fallback protection
 interface ErrorBoundaryState {
@@ -87,17 +92,49 @@ function FeatureDisabled() {
 // Main page content
 function TableEntryContent() {
   const navigate = useNavigate();
-  const disabledTooltip = "Disponível no próximo checkpoint";
+  const { profile } = useAuth();
+  const username = profile?.username || "Usuário";
+  
+  const {
+    rows,
+    selectedRows,
+    errors,
+    addRow,
+    updateRow,
+    selectRow,
+    selectAll,
+    deleteSelected,
+    clearAll,
+    validate,
+  } = useTableEntry(username);
 
-  const upcomingFeatures = [
-    "Adicionar/editar linhas",
-    "Upload opcional CSV/XML para preencher",
-    "Validação e confirmação",
-  ];
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [showErrorsModal, setShowErrorsModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+
+  const responsaveis = [username];
+  const hasSelectedRows = selectedRows.size > 0;
+  const hasRows = rows.length > 0;
+
+  const handleValidate = () => {
+    const result = validate();
+    setValidationResult(result);
+    if (result.valid) {
+      setShowSuccessModal(true);
+    } else {
+      setShowErrorsModal(true);
+    }
+  };
+
+  const handleClearConfirm = () => {
+    clearAll();
+    setShowClearModal(false);
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 md:p-6 max-w-4xl">
+      <div className="container mx-auto p-4 md:p-6 max-w-7xl">
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
@@ -114,77 +151,84 @@ function TableEntryContent() {
         </Breadcrumb>
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Entrada em Tabela</h1>
           <p className="text-muted-foreground mt-2">
-            Registre várias transações de uma vez usando uma tabela editável (em desenvolvimento).
+            Registre várias transações de uma vez usando a tabela editável abaixo.
           </p>
         </div>
 
-        {/* Informative Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Checkpoint A concluído</CardTitle>
-            <CardDescription>
-              A tabela editável será implementada no próximo passo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-3">O que virá a seguir:</p>
-            <ul className="space-y-2">
-              {upcomingFeatures.map((feature, index) => (
-                <li key={index} className="flex items-center gap-2 text-sm">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
         {/* Action Buttons */}
         <Card className="mb-6">
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-lg">Ações</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button disabled variant="outline">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Adicionar linha
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{disabledTooltip}</TooltipContent>
-              </Tooltip>
+              <Button onClick={addRow} variant="outline">
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar linha
+              </Button>
+
+              <Button
+                onClick={deleteSelected}
+                variant="outline"
+                disabled={!hasSelectedRows}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Deletar selecionadas
+              </Button>
+
+              <Button
+                onClick={() => setShowClearModal(true)}
+                variant="outline"
+                disabled={!hasRows}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Limpar tabela
+              </Button>
 
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
                     <Button disabled variant="outline">
                       <Upload className="mr-2 h-4 w-4" />
-                      Preencher por arquivo (CSV/XML)
+                      Preencher por arquivo
                     </Button>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>{disabledTooltip}</TooltipContent>
+                <TooltipContent>Disponível no Checkpoint C</TooltipContent>
               </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button disabled>
-                      <Check className="mr-2 h-4 w-4" />
-                      Confirmar e adicionar transações
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{disabledTooltip}</TooltipContent>
-              </Tooltip>
+              <Button onClick={handleValidate} disabled={!hasRows}>
+                <Check className="mr-2 h-4 w-4" />
+                Confirmar e validar
+              </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Editable Table */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Transações</CardTitle>
+            <CardDescription>
+              {rows.length === 0
+                ? "Adicione linhas para começar a registrar transações."
+                : `${rows.length} linha(s) | ${selectedRows.size} selecionada(s)`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <EditableTable
+              rows={rows}
+              selectedRows={selectedRows}
+              errors={errors}
+              responsaveis={responsaveis}
+              onRowChange={updateRow}
+              onSelectRow={selectRow}
+              onSelectAll={selectAll}
+            />
           </CardContent>
         </Card>
 
@@ -193,6 +237,26 @@ function TableEntryContent() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar para Transações
         </Button>
+
+        {/* Modals */}
+        <ClearConfirmModal
+          open={showClearModal}
+          onClose={() => setShowClearModal(false)}
+          onConfirm={handleClearConfirm}
+        />
+        
+        <ErrorsModal
+          open={showErrorsModal}
+          onClose={() => setShowErrorsModal(false)}
+          errors={errors}
+        />
+        
+        <SuccessModal
+          open={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          validCount={validationResult?.validCount || 0}
+          totalBrl={validationResult?.totalBrl || 0}
+        />
       </div>
     </div>
   );
