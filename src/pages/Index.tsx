@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2, FileUp } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { SummaryCard } from '@/components/SummaryCard';
 import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
@@ -179,11 +179,14 @@ const Index = () => {
                   onAddExpenseCategory={addExpenseCategory}
                   onAddIncomeCategory={addIncomeCategory}
                 />
-                <ImportExpensesDialog
-                  onImport={addMultipleTransactions}
-                  username={profile?.username || 'Usuário'}
-                  expenseCategoryLabels={expenseCategoryLabels}
-                />
+                <Button
+                  variant="outline"
+                  className="gap-2 border-dashed border-primary/50 text-primary hover:text-primary"
+                  onClick={() => window.location.href = '/transacoes/tabela'}
+                >
+                  <FileUp className="h-4 w-4" />
+                  Entrada em Tabela
+                </Button>
               </div>
             </div>
           </div>
