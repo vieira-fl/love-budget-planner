@@ -14,6 +14,7 @@ import { ConfirmationModal, ErrorsModal, InfoModal, SaveErrorModal, ClearConfirm
 import { useTableEntry } from "./hooks/useTableEntry";
 import { ValidationResult } from "./types";
 import { parseBRL } from "./utils/tableEntryUtils";
+import { parseCsvContent } from "./utils/csvParser";
 import { Transaction, TransactionType, RecurrenceType } from "@/types/finance";
 
 type FileStatus = {
@@ -117,6 +118,7 @@ function TableEntryContent() {
     selectAll,
     deleteSelected,
     clearAll,
+    appendRows,
     registerOption,
     formatBrlOnBlur,
     validate,
@@ -193,7 +195,7 @@ function TableEntryContent() {
     setFileStatus(null);
   };
 
-  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -217,18 +219,61 @@ function TableEntryContent() {
       return;
     }
 
-    // File is valid - show success feedback
-    console.log("File validated successfully:", file.name, file.type, file.size);
-    
-    // Simulate processing (actual parsing will be in next checkpoint)
-    setTimeout(() => {
+    // Read and parse the file
+    try {
+      const content = await file.text();
+      const fileName = file.name.toLowerCase();
+      
+      if (fileName.endsWith(".csv")) {
+        const result = parseCsvContent(content, userName);
+        
+        if (result.parseErrors.length > 0) {
+          setIsProcessingFile(false);
+          setFileStatus({
+            type: "error",
+            fileName: file.name,
+            message: result.parseErrors.join(" "),
+          });
+          return;
+        }
+
+        if (result.rows.length === 0) {
+          setIsProcessingFile(false);
+          setFileStatus({
+            type: "error",
+            fileName: file.name,
+            message: "Nenhuma linha de dados encontrada no arquivo.",
+          });
+          return;
+        }
+
+        // Append rows to the table
+        appendRows(result.rows, result.errors);
+        
+        setIsProcessingFile(false);
+        setFileStatus({
+          type: "success",
+          fileName: file.name,
+          message: `${result.rows.length} linha(s) importada(s) com sucesso!`,
+        });
+      } else if (fileName.endsWith(".xml")) {
+        // XML parsing not implemented yet
+        setIsProcessingFile(false);
+        setFileStatus({
+          type: "error",
+          fileName: file.name,
+          message: "Parsing de XML ainda não implementado. Use arquivos CSV.",
+        });
+      }
+    } catch (error) {
+      console.error("Error parsing file:", error);
       setIsProcessingFile(false);
       setFileStatus({
-        type: "success",
+        type: "error",
         fileName: file.name,
-        message: "Arquivo válido! Pronto para processamento.",
+        message: "Erro ao processar o arquivo.",
       });
-    }, 500);
+    }
   };
 
   const handleValidate = () => {
