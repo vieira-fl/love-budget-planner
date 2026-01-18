@@ -147,12 +147,13 @@ function TableEntryContent() {
 
   const REQUIRED_FIELDS = ["data", "descricao", "brl"];
 
-  const normalizeHeader = (value: string) => value.trim().toLowerCase();
+  const normalizeHeader = (value: string) =>
+    value.replace(/\uFEFF/g, "").trim().toLowerCase();
 
   const inferDelimiter = (line: string) => {
     const commaCount = (line.match(/,/g) || []).length;
     const semicolonCount = (line.match(/;/g) || []).length;
-    return semicolonCount > commaCount ? ";" : ",";
+    return semicolonCount >= commaCount ? ";" : ",";
   };
 
   const parseDelimitedLine = (line: string, delimiter: string) => {
@@ -261,7 +262,7 @@ function TableEntryContent() {
 
     setIsProcessingFile(true);
     try {
-      const text = await file.text();
+      const text = (await file.text()).replace(/^\uFEFF/, "");
       const extension = file.name.split(".").pop()?.toLowerCase();
 
       let rowsToAppend: TransactionRow[] = [];
@@ -281,6 +282,7 @@ function TableEntryContent() {
         }
 
         const headerLine = lines[headerIndex];
+        const hasBomInHeader = /\uFEFF/.test(headerLine);
         const delimiter = inferDelimiter(headerLine);
         const headerValues = parseDelimitedLine(headerLine, delimiter).map(normalizeHeader);
         headerValues.forEach((value) => {
@@ -298,8 +300,9 @@ function TableEntryContent() {
 
         const missingFields = REQUIRED_FIELDS.filter((field) => !headerMap.has(field));
         if (missingFields.length > 0) {
+          const bomMessage = hasBomInHeader ? "Arquivo contém BOM no cabeçalho; " : "";
           throw new Error(
-            `Campos encontrados: ${Array.from(foundFields).join(", ") || "nenhum"}. ` +
+            `${bomMessage}Campos encontrados: ${Array.from(foundFields).join(", ") || "nenhum"}. ` +
               `Campos obrigatórios: ${REQUIRED_FIELDS.join(", ")}.`
           );
         }
