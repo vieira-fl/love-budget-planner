@@ -155,6 +155,15 @@ export function useTableEntry({ defaultResponsavel, userId }: UseTableEntryArgs)
     setErrorsByCell({});
   }, []);
 
+  const appendRows = useCallback((nextRows: TransactionRow[], nextErrors: ErrorsByCell) => {
+    if (nextRows.length === 0) {
+      return;
+    }
+    setRows((prev) => [...prev, ...nextRows]);
+    setErrorsByCell((prev) => ({ ...prev, ...nextErrors }));
+    setSelectedRows(new Set());
+  }, []);
+
   const registerOption = useCallback(
     (field: OptionField, value: string) => {
       const normalized = normalizeTextOption(value);
@@ -259,6 +268,7 @@ export function useTableEntry({ defaultResponsavel, userId }: UseTableEntryArgs)
     selectAll,
     deleteSelected,
     clearAll,
+    appendRows,
     registerOption,
     formatBrlOnBlur,
     validate,
