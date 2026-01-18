@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, normalizeCategoryKey } from '@/types/finance';
+import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, PaymentMethod, PAYMENT_METHODS, normalizeCategoryKey } from '@/types/finance';
 import { Plus, PlusCircle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +52,7 @@ export function AddTransactionDialog({
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [recurrence, setRecurrence] = useState<RecurrenceType>('pontual');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cartão');
   const [includeInSplit, setIncludeInSplit] = useState(true);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -84,6 +85,7 @@ export function AddTransactionDialog({
       date: parsedDate,
       recurrence,
       includeInSplit: type === 'expense' ? includeInSplit : false,
+      paymentMethod: type === 'expense' ? paymentMethod : undefined,
     };
 
     if (enableMultiMonth && selectedMonths.length > 0 && onAddMultiple) {
@@ -120,6 +122,7 @@ export function AddTransactionDialog({
     setAmount('');
     setCategory('outros');
     setRecurrence('pontual');
+    setPaymentMethod('Cartão');
     setIncludeInSplit(true);
     setEnableMultiMonth(false);
     setSelectedMonths([]);
@@ -312,6 +315,24 @@ export function AddTransactionDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {type === 'expense' && (
+            <div className="space-y-2">
+              <Label className="text-foreground">Forma de PGTO</Label>
+              <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}>
+                <SelectTrigger className="bg-background border-input">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((method) => (
+                    <SelectItem key={method} value={method}>
+                      {method}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="date" className="text-foreground">Data</Label>

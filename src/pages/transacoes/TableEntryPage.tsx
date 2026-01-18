@@ -16,7 +16,7 @@ import { useTableEntry } from "./hooks/useTableEntry";
 import { ValidationResult } from "./types";
 import { parseBRL } from "./utils/tableEntryUtils";
 import { parseCsvContent } from "./utils/csvParser";
-import { Transaction, TransactionType, RecurrenceType, normalizeCategoryKey } from "@/types/finance";
+import { Transaction, TransactionType, RecurrenceType, PaymentMethod, normalizeCategoryKey } from "@/types/finance";
 
 type FileStatus = {
   type: "success" | "error";
@@ -342,6 +342,7 @@ function TableEntryContent() {
         date: parsedDate,
         recurrence: mapRecurrence(row.tipo),
         includeInSplit,
+        paymentMethod: row.formaPgto as PaymentMethod,
       };
     });
   };
@@ -367,6 +368,7 @@ function TableEntryContent() {
         date: format(transaction.date, "yyyy-MM-dd"),
         recurrence: transaction.recurrence === "recorrente" ? "monthly" : "once",
         include_in_split: transaction.includeInSplit,
+        payment_method: transaction.paymentMethod,
       }));
 
       const { error } = await supabase

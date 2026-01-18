@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType } from '@/types/finance';
+import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, PaymentMethod, PAYMENT_METHODS } from '@/types/finance';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -33,6 +33,7 @@ export function EditTransactionDialog({
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [recurrence, setRecurrence] = useState<RecurrenceType>('pontual');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cartão');
   const [includeInSplit, setIncludeInSplit] = useState(true);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export function EditTransactionDialog({
       setAmount(transaction.amount.toString());
       setDate(format(new Date(transaction.date), 'yyyy-MM-dd'));
       setRecurrence(transaction.recurrence);
+      setPaymentMethod(transaction.paymentMethod || 'Cartão');
       setIncludeInSplit(transaction.includeInSplit);
     }
   }, [transaction]);
@@ -63,6 +65,7 @@ export function EditTransactionDialog({
       date: new Date(date),
       recurrence,
       includeInSplit: type === 'expense' ? includeInSplit : false,
+      paymentMethod: type === 'expense' ? paymentMethod : undefined,
     });
 
     onOpenChange(false);
@@ -189,6 +192,24 @@ export function EditTransactionDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {type === 'expense' && (
+            <div className="space-y-2">
+              <Label className="text-foreground">Forma de PGTO</Label>
+              <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}>
+                <SelectTrigger className="bg-background border-input">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((method) => (
+                    <SelectItem key={method} value={method}>
+                      {method}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="edit-date" className="text-foreground">Data</Label>

@@ -31,6 +31,10 @@ export type IncomeCategory =
 
 export type RecurrenceType = 'pontual' | 'recorrente';
 
+export type PaymentMethod = 'Cartão' | 'PIX' | 'TED' | 'Cash';
+
+export const PAYMENT_METHODS: PaymentMethod[] = ['Cartão', 'PIX', 'TED', 'Cash'];
+
 export interface Transaction {
   id: string;
   type: TransactionType;
@@ -42,6 +46,7 @@ export interface Transaction {
   date: Date;
   recurrence: RecurrenceType;
   includeInSplit: boolean;
+  paymentMethod?: PaymentMethod;
 }
 
 export interface SplitCalculation {

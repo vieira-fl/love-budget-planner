@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TransactionRow, ErrorsByCell, SortField, SortDirection } from "../types";
+import { TransactionRow, ErrorsByCell, SortField, SortDirection, DEFAULT_PAYMENT_METHODS } from "../types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { formatDateInput, sanitizeBRLInput, parseBRL } from "../utils/tableEntryUtils";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { PaymentMethod } from "@/types/finance";
 
 interface EditableTableProps {
   rows: TransactionRow[];
@@ -143,7 +144,8 @@ export function EditableTable({
             <SortableHeader field="brl" className="min-w-[120px]">Valor (R$)</SortableHeader>
             <SortableHeader field="responsavel" className="min-w-[150px]">Responsável</SortableHeader>
             <SortableHeader field="categoria" className="min-w-[150px]">Categoria</SortableHeader>
-            <SortableHeader field="tipo" className="min-w-[140px]">Tipo</SortableHeader>
+            <SortableHeader field="tipo" className="min-w-[120px]">Tipo</SortableHeader>
+            <SortableHeader field="formaPgto" className="min-w-[120px]">Forma PGTO</SortableHeader>
             <SortableHeader field="tagDespesa" className="min-w-[130px]">Tag</SortableHeader>
             <SortableHeader field="incluirRateio" className="w-[80px] text-center">Rateio</SortableHeader>
             <SortableHeader field="parcelado" className="w-[80px] text-center">Parcelado</SortableHeader>
@@ -242,6 +244,23 @@ export function EditableTable({
                     <SelectContent>
                       <SelectItem value="Pontual">Pontual</SelectItem>
                       <SelectItem value="Recorrente">Recorrente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <Select
+                    value={row.formaPgto}
+                    onValueChange={(value) => onRowChange(row.id, "formaPgto", value as PaymentMethod)}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DEFAULT_PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method} value={method}>
+                          {method}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </TableCell>

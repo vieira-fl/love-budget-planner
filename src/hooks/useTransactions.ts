@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Transaction, 
-  ExpenseCategory, 
+  ExpenseCategory,
   CategoryAnalysis,
   SplitCalculation,
   categoryThresholds,
@@ -14,7 +14,8 @@ import {
   normalizeCategoryKey,
   MonthlyComparison,
   CategoryChange,
-  MonthlyBalanceSummary
+  MonthlyBalanceSummary,
+  PaymentMethod,
 } from '@/types/finance';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,6 +37,7 @@ interface DbTransaction {
   date: string;
   recurrence: string | null;
   include_in_split: boolean;
+  payment_method: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +66,7 @@ const mapDbToTransaction = (db: DbTransaction): Transaction => ({
   date: new Date(db.date),
   recurrence: mapRecurrenceFromDb(db.recurrence),
   includeInSplit: db.include_in_split,
+  paymentMethod: db.payment_method as PaymentMethod | undefined,
 });
 
 export function useTransactions(periodFilter?: PeriodFilter) {
@@ -478,6 +481,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
           date: format(transaction.date, 'yyyy-MM-dd'),
           recurrence: mapRecurrenceToDb(transaction.recurrence),
           include_in_split: transaction.includeInSplit,
+          payment_method: transaction.paymentMethod || null,
         })
         .select()
         .single();
@@ -526,6 +530,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
         date: format(t.date, 'yyyy-MM-dd'),
         recurrence: mapRecurrenceToDb(t.recurrence),
         include_in_split: t.includeInSplit,
+        payment_method: t.paymentMethod || null,
       }));
 
       const { data, error } = await supabase
@@ -571,6 +576,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
           date: format(transaction.date, 'yyyy-MM-dd'),
           recurrence: mapRecurrenceToDb(transaction.recurrence),
           include_in_split: transaction.includeInSplit,
+          payment_method: transaction.paymentMethod || null,
         })
         .eq('id', transaction.id);
 

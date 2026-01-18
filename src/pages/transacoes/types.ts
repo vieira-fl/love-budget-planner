@@ -1,4 +1,5 @@
 // Types for table entry page
+import { PaymentMethod } from '@/types/finance';
 
 export interface TransactionRow {
   id: string;
@@ -8,6 +9,7 @@ export interface TransactionRow {
   responsavel: string;
   categoria: string;
   tipo: string;
+  formaPgto: PaymentMethod;
   tagDespesa?: string;
   incluirRateio: boolean;
   parcelado: boolean;
@@ -46,6 +48,13 @@ export const DEFAULT_CATEGORIES = [
 export const DEFAULT_TYPES = [
   "Pontual",
   "Recorrente",
+];
+
+export const DEFAULT_PAYMENT_METHODS = [
+  "Cartão",
+  "PIX",
+  "TED",
+  "Cash",
 ];
 
 export const DEFAULT_TAGS: string[] = [];

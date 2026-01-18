@@ -85,6 +85,7 @@ export function useTableEntry({ defaultResponsavel, userId }: UseTableEntryArgs)
       responsavel: defaultResponsavel,
       categoria: "Outros",
       tipo: "Pontual",
+      formaPgto: "Cartão",
       tagDespesa: "",
       incluirRateio: true,
       parcelado: false,
