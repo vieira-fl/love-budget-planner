@@ -1,28 +1,18 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { RowError } from "../types";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, Info, XCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ErrorsModalProps {
   open: boolean;
   onClose: () => void;
-  errors: RowError[];
+  errorList: string[];
 }
 
-export function ErrorsModal({ open, onClose, errors }: ErrorsModalProps) {
-  const fieldLabels: Record<string, string> = {
-    data: "Data",
-    descricao: "Descrição",
-    brl: "Valor",
-    responsavel: "Responsável",
-    categoria: "Categoria",
-    tipo: "Tipo",
-    tagDespesa: "Tag",
-    incluirRateio: "Rateio",
-    parcelado: "Parcelado",
-  };
+export function ErrorsModal({ open, onClose, errorList }: ErrorsModalProps) {
+  const visibleErrors = errorList.slice(0, 20);
+  const remaining = errorList.length - visibleErrors.length;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -38,12 +28,14 @@ export function ErrorsModal({ open, onClose, errors }: ErrorsModalProps) {
         </DialogHeader>
         <ScrollArea className="max-h-[300px]">
           <ul className="space-y-2 text-sm">
-            {errors.map((error, i) => (
-              <li key={i} className="flex items-start gap-2 text-destructive">
-                <span className="font-medium">Linha {error.rowIndex + 1}:</span>
-                <span>{fieldLabels[error.field] || error.field} - {error.message}</span>
+            {visibleErrors.map((error, i) => (
+              <li key={i} className="text-destructive">
+                {error}
               </li>
             ))}
+            {remaining > 0 && (
+              <li className="text-muted-foreground">+{remaining} erros adicionais</li>
+            )}
           </ul>
         </ScrollArea>
         <DialogFooter>
@@ -91,6 +83,32 @@ export function SuccessModal({ open, onClose, validCount, totalBrl }: SuccessMod
             <span className="font-medium">{formatCurrency(totalBrl)}</span>
           </div>
         </div>
+        <DialogFooter>
+          <Button onClick={onClose}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface InfoModalProps {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  message: string;
+}
+
+export function InfoModal({ open, onClose, title, message }: InfoModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <Info className="h-5 w-5 text-primary" />
+            <DialogTitle>{title}</DialogTitle>
+          </div>
+          <DialogDescription>{message}</DialogDescription>
+        </DialogHeader>
         <DialogFooter>
           <Button onClick={onClose}>Fechar</Button>
         </DialogFooter>

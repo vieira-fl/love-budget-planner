@@ -8,7 +8,7 @@ import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw } from
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { EditableTable } from "./components/EditableTable";
-import { ErrorsModal, SuccessModal, ClearConfirmModal } from "./components/ValidationModals";
+import { ErrorsModal, InfoModal, SuccessModal, ClearConfirmModal } from "./components/ValidationModals";
 import { useTableEntry } from "./hooks/useTableEntry";
 import { ValidationResult } from "./types";
 
@@ -79,7 +79,7 @@ function FeatureDisabled() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
-          <Button onClick={() => navigate("/")}>
+          <Button onClick={() => navigate("/") }>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar para Transações
           </Button>
@@ -92,32 +92,43 @@ function FeatureDisabled() {
 // Main page content
 function TableEntryContent() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const username = profile?.username || "Usuário";
+  const { profile, user } = useAuth();
+  const userName = profile?.username || "Usuário logado";
+  const userId = user?.id || profile?.user_id || "default";
   
   const {
     rows,
     selectedRows,
-    errors,
+    errorsByCell,
+    options,
     addRow,
     updateRow,
     selectRow,
     selectAll,
     deleteSelected,
     clearAll,
+    registerOption,
+    formatBrlOnBlur,
     validate,
-  } = useTableEntry(username);
+  } = useTableEntry({ defaultResponsavel: userName, userId });
 
   const [showClearModal, setShowClearModal] = useState(false);
   const [showErrorsModal, setShowErrorsModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
 
-  const responsaveis = [username];
+  const responsaveis = [userName];
   const hasSelectedRows = selectedRows.size > 0;
   const hasRows = rows.length > 0;
 
   const handleValidate = () => {
+    if (rows.length === 0) {
+      setValidationResult(null);
+      setShowInfoModal(true);
+      return;
+    }
+
     const result = validate();
     setValidationResult(result);
     if (result.valid) {
@@ -201,7 +212,7 @@ function TableEntryContent() {
                 <TooltipContent>Disponível no Checkpoint C</TooltipContent>
               </Tooltip>
 
-              <Button onClick={handleValidate} disabled={!hasRows}>
+              <Button onClick={handleValidate}>
                 <Check className="mr-2 h-4 w-4" />
                 Confirmar e validar
               </Button>
@@ -223,11 +234,16 @@ function TableEntryContent() {
             <EditableTable
               rows={rows}
               selectedRows={selectedRows}
-              errors={errors}
+              errorsByCell={errorsByCell}
               responsaveis={responsaveis}
+              categories={options.categories}
+              types={options.types}
+              tags={options.tags}
               onRowChange={updateRow}
               onSelectRow={selectRow}
               onSelectAll={selectAll}
+              onOptionCommit={registerOption}
+              onBrlBlur={formatBrlOnBlur}
             />
           </CardContent>
         </Card>
@@ -248,7 +264,14 @@ function TableEntryContent() {
         <ErrorsModal
           open={showErrorsModal}
           onClose={() => setShowErrorsModal(false)}
-          errors={errors}
+          errorList={validationResult?.errorList || []}
+        />
+
+        <InfoModal
+          open={showInfoModal}
+          onClose={() => setShowInfoModal(false)}
+          title="Tabela vazia"
+          message="Adicione ao menos uma linha antes de confirmar."
         />
         
         <SuccessModal

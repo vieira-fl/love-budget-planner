@@ -1,34 +1,45 @@
-import { TransactionRow, CATEGORIAS, TIPOS, TAGS, RowError } from "../types";
+import { TransactionRow, ErrorsByCell } from "../types";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { formatDateInput, sanitizeBRLInput } from "../utils/tableEntryUtils";
 
 interface EditableTableProps {
   rows: TransactionRow[];
   selectedRows: Set<string>;
-  errors: RowError[];
+  errorsByCell: ErrorsByCell;
   responsaveis: string[];
+  categories: string[];
+  types: string[];
+  tags: string[];
   onRowChange: (id: string, field: keyof TransactionRow, value: string | boolean) => void;
   onSelectRow: (id: string, selected: boolean) => void;
   onSelectAll: (selected: boolean) => void;
+  onOptionCommit: (field: "categoria" | "tipo" | "tagDespesa", value: string) => void;
+  onBrlBlur: (id: string) => void;
 }
 
 export function EditableTable({
   rows,
   selectedRows,
-  errors,
+  errorsByCell,
   responsaveis,
+  categories,
+  types,
+  tags,
   onRowChange,
   onSelectRow,
   onSelectAll,
+  onOptionCommit,
+  onBrlBlur,
 }: EditableTableProps) {
   const allSelected = rows.length > 0 && selectedRows.size === rows.length;
   const someSelected = selectedRows.size > 0 && selectedRows.size < rows.length;
 
-  const hasError = (rowIndex: number, field: keyof TransactionRow) => {
-    return errors.some((e) => e.rowIndex === rowIndex && e.field === field);
+  const getError = (rowId: string, field: keyof TransactionRow) => {
+    return errorsByCell[rowId]?.[field];
   };
 
   const errorClass = "border-destructive ring-1 ring-destructive";
@@ -70,126 +81,151 @@ export function EditableTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={row.id}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedRows.has(row.id)}
-                  onCheckedChange={(checked) => onSelectRow(row.id, !!checked)}
-                  aria-label={`Selecionar linha ${index + 1}`}
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  value={row.data}
-                  onChange={(e) => onRowChange(row.id, "data", e.target.value)}
-                  placeholder="dd/mm/aaaa"
-                  className={cn("h-8", hasError(index, "data") && errorClass)}
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  value={row.descricao}
-                  onChange={(e) => onRowChange(row.id, "descricao", e.target.value)}
-                  placeholder="Descrição"
-                  className={cn("h-8", hasError(index, "descricao") && errorClass)}
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  value={row.brl}
-                  onChange={(e) => onRowChange(row.id, "brl", e.target.value)}
-                  placeholder="0,00"
-                  className={cn("h-8", hasError(index, "brl") && errorClass)}
-                />
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={row.responsavel}
-                  onValueChange={(value) => onRowChange(row.id, "responsavel", value)}
-                >
-                  <SelectTrigger className={cn("h-8", hasError(index, "responsavel") && errorClass)}>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {responsaveis.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={row.categoria}
-                  onValueChange={(value) => onRowChange(row.id, "categoria", value)}
-                >
-                  <SelectTrigger className={cn("h-8", hasError(index, "categoria") && errorClass)}>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIAS.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={row.tipo}
-                  onValueChange={(value) => onRowChange(row.id, "tipo", value)}
-                >
-                  <SelectTrigger className={cn("h-8", hasError(index, "tipo") && errorClass)}>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIPOS.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={row.tagDespesa || "_none_"}
-                  onValueChange={(value) => onRowChange(row.id, "tagDespesa", value === "_none_" ? "" : value)}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Opcional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none_">(Nenhuma)</SelectItem>
-                    {TAGS.filter(t => t).map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="text-center">
-                <Checkbox
-                  checked={row.incluirRateio}
-                  onCheckedChange={(checked) => onRowChange(row.id, "incluirRateio", !!checked)}
-                  aria-label="Incluir no rateio"
-                />
-              </TableCell>
-              <TableCell className="text-center">
-                <Checkbox
-                  checked={row.parcelado}
-                  onCheckedChange={(checked) => onRowChange(row.id, "parcelado", !!checked)}
-                  aria-label="Parcelado"
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+          {rows.map((row, index) => {
+            const dataError = getError(row.id, "data");
+            const descricaoError = getError(row.id, "descricao");
+            const brlError = getError(row.id, "brl");
+            const responsavelError = getError(row.id, "responsavel");
+            const categoriaError = getError(row.id, "categoria");
+            const tipoError = getError(row.id, "tipo");
+
+            return (
+              <TableRow key={row.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedRows.has(row.id)}
+                    onCheckedChange={(checked) => onSelectRow(row.id, !!checked)}
+                    aria-label={`Selecionar linha ${index + 1}`}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={row.data}
+                    onChange={(e) => onRowChange(row.id, "data", formatDateInput(e.target.value))}
+                    placeholder="dd/mm/aaaa"
+                    inputMode="numeric"
+                    className={cn("h-8", dataError && errorClass)}
+                    title={dataError}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={row.descricao}
+                    onChange={(e) => onRowChange(row.id, "descricao", e.target.value)}
+                    placeholder="Descrição"
+                    className={cn("h-8", descricaoError && errorClass)}
+                    title={descricaoError}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={row.brl}
+                    onChange={(e) => onRowChange(row.id, "brl", sanitizeBRLInput(e.target.value))}
+                    onBlur={() => onBrlBlur(row.id)}
+                    placeholder="0,00"
+                    inputMode="decimal"
+                    className={cn("h-8", brlError && errorClass)}
+                    title={brlError}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Select
+                    value={row.responsavel}
+                    onValueChange={(value) => onRowChange(row.id, "responsavel", value)}
+                  >
+                    <SelectTrigger className={cn("h-8", responsavelError && errorClass)}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {responsaveis.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={row.categoria}
+                    onChange={(e) => onRowChange(row.id, "categoria", e.target.value)}
+                    onBlur={(e) => onOptionCommit("categoria", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        onOptionCommit("categoria", e.currentTarget.value);
+                      }
+                    }}
+                    list="table-entry-categories"
+                    placeholder="Categoria"
+                    className={cn("h-8", categoriaError && errorClass)}
+                    title={categoriaError}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={row.tipo}
+                    onChange={(e) => onRowChange(row.id, "tipo", e.target.value)}
+                    onBlur={(e) => onOptionCommit("tipo", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        onOptionCommit("tipo", e.currentTarget.value);
+                      }
+                    }}
+                    list="table-entry-types"
+                    placeholder="Tipo"
+                    className={cn("h-8", tipoError && errorClass)}
+                    title={tipoError}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={row.tagDespesa || ""}
+                    onChange={(e) => onRowChange(row.id, "tagDespesa", e.target.value)}
+                    onBlur={(e) => onOptionCommit("tagDespesa", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        onOptionCommit("tagDespesa", e.currentTarget.value);
+                      }
+                    }}
+                    list="table-entry-tags"
+                    placeholder="Opcional"
+                    className="h-8"
+                  />
+                </TableCell>
+                <TableCell className="text-center">
+                  <Checkbox
+                    checked={row.incluirRateio}
+                    onCheckedChange={(checked) => onRowChange(row.id, "incluirRateio", !!checked)}
+                    aria-label="Incluir no rateio"
+                  />
+                </TableCell>
+                <TableCell className="text-center">
+                  <Checkbox
+                    checked={row.parcelado}
+                    onCheckedChange={(checked) => onRowChange(row.id, "parcelado", !!checked)}
+                    aria-label="Parcelado"
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
+      <datalist id="table-entry-categories">
+        {categories.map((category) => (
+          <option key={category} value={category} />
+        ))}
+      </datalist>
+      <datalist id="table-entry-types">
+        {types.map((type) => (
+          <option key={type} value={type} />
+        ))}
+      </datalist>
+      <datalist id="table-entry-tags">
+        {tags.map((tag) => (
+          <option key={tag} value={tag} />
+        ))}
+      </datalist>
     </div>
   );
 }

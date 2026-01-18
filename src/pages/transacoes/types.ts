@@ -8,48 +8,45 @@ export interface TransactionRow {
   responsavel: string;
   categoria: string;
   tipo: string;
-  tagDespesa: string;
+  tagDespesa?: string;
   incluirRateio: boolean;
   parcelado: boolean;
 }
 
-export interface RowError {
-  rowIndex: number;
-  field: keyof TransactionRow;
-  message: string;
-}
+export type ErrorsByCell = Record<string, Partial<Record<keyof TransactionRow, string>>>;
 
 export interface ValidationResult {
   valid: boolean;
-  errors: RowError[];
+  errorsByCell: ErrorsByCell;
+  errorList: string[];
   totalBrl: number;
   validCount: number;
 }
 
-// Mock data for dropdowns
-export const CATEGORIAS = [
+export interface TransactionOptions {
+  categories: string[];
+  types: string[];
+  tags: string[];
+}
+
+// Default options for dropdowns
+export const DEFAULT_CATEGORIES = [
   "Alimentação",
-  "Transporte", 
+  "Transporte",
   "Moradia",
   "Saúde",
   "Lazer",
   "Educação",
   "Assinaturas",
   "Impostos",
-  "Outros"
+  "Outros",
 ];
 
-export const TIPOS = [
+export const DEFAULT_TYPES = [
   "Despesa",
   "Receita",
   "Transferência",
-  "Estorno"
+  "Estorno",
 ];
 
-export const TAGS = [
-  "",
-  "Essencial",
-  "Supérfluo",
-  "Investimento",
-  "Emergência"
-];
+export const DEFAULT_TAGS: string[] = [];
