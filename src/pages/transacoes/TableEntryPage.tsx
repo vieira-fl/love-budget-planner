@@ -1,5 +1,6 @@
 import { Component, ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,10 +8,13 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { EditableTable } from "./components/EditableTable";
-import { ErrorsModal, InfoModal, SuccessModal, ClearConfirmModal } from "./components/ValidationModals";
+import { ConfirmationModal, ErrorsModal, InfoModal, SaveErrorModal, ClearConfirmModal } from "./components/ValidationModals";
 import { useTableEntry } from "./hooks/useTableEntry";
 import { ValidationResult } from "./types";
+import { parseBRL } from "./utils/tableEntryUtils";
+import { Transaction, TransactionType, RecurrenceType } from "@/types/finance";
 
 // Error Boundary for fallback protection
 interface ErrorBoundaryState {
@@ -114,8 +118,11 @@ function TableEntryContent() {
 
   const [showClearModal, setShowClearModal] = useState(false);
   const [showErrorsModal, setShowErrorsModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showSaveErrorModal, setShowSaveErrorModal] = useState(false);
+  const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
 
   const responsaveis = [userName];
@@ -132,7 +139,7 @@ function TableEntryContent() {
     const result = validate();
     setValidationResult(result);
     if (result.valid) {
-      setShowSuccessModal(true);
+      setShowConfirmModal(true);
     } else {
       setShowErrorsModal(true);
     }
@@ -141,6 +148,99 @@ function TableEntryContent() {
   const handleClearConfirm = () => {
     clearAll();
     setShowClearModal(false);
+  };
+
+  const mapTransactionType = (tipo: string): TransactionType => {
+    const normalized = tipo.trim().toLowerCase();
+    if (normalized.includes("receita") || normalized.includes("income")) {
+      return "income";
+    }
+    return "expense";
+  };
+
+  const parseDatePtBr = (value: string): Date => {
+    const [day, month, year] = value.split("/").map(Number);
+    return new Date(year, (month ?? 1) - 1, day ?? 1);
+  };
+
+  const mapRecurrence = (parcelado: boolean): RecurrenceType =>
+    parcelado ? "recorrente" : "pontual";
+
+  const buildTransactionsPayload = (): Omit<Transaction, "id">[] => {
+    return rows.map((row) => {
+      const amount = parseBRL(row.brl);
+      if (amount === null) {
+        throw new Error("Valor inválido encontrado na tabela.");
+      }
+      const parsedDate = parseDatePtBr(row.data);
+      if (Number.isNaN(parsedDate.getTime())) {
+        throw new Error("Data inválida encontrada na tabela.");
+      }
+
+      const type = mapTransactionType(row.tipo);
+      const includeInSplit = type === "expense" ? row.incluirRateio : false;
+
+      return {
+        type,
+        category: row.categoria.trim(),
+        description: row.descricao.trim(),
+        tag: row.tagDespesa?.trim() || undefined,
+        amount,
+        person: row.responsavel.trim(),
+        date: parsedDate,
+        recurrence: mapRecurrence(row.parcelado),
+        includeInSplit,
+      };
+    });
+  };
+
+  const handleConfirmSave = async () => {
+    setIsSaving(true);
+    setSaveErrorMessage(null);
+
+    try {
+      if (!user?.id) {
+        throw new Error("Você precisa estar logado para salvar transações.");
+      }
+
+      const transactionsToInsert = buildTransactionsPayload();
+      const inserts = transactionsToInsert.map((transaction) => ({
+        user_id: user.id,
+        type: transaction.type,
+        category: transaction.category,
+        description: transaction.description,
+        tag: transaction.tag ?? null,
+        amount: transaction.amount,
+        person: transaction.person,
+        date: format(transaction.date, "yyyy-MM-dd"),
+        recurrence: transaction.recurrence === "recorrente" ? "monthly" : "once",
+        include_in_split: transaction.includeInSplit,
+      }));
+
+      const { error } = await supabase
+        .from("transactions")
+        .insert(inserts)
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      clearAll();
+      setValidationResult(null);
+      setShowConfirmModal(false);
+      navigate("/");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar as transações.";
+      setSaveErrorMessage(message);
+      setShowConfirmModal(false);
+      setShowSaveErrorModal(true);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -274,11 +374,19 @@ function TableEntryContent() {
           message="Adicione ao menos uma linha antes de confirmar."
         />
         
-        <SuccessModal
-          open={showSuccessModal}
-          onClose={() => setShowSuccessModal(false)}
+        <ConfirmationModal
+          open={showConfirmModal}
+          onConfirm={handleConfirmSave}
+          onReturn={() => setShowConfirmModal(false)}
           validCount={validationResult?.validCount || 0}
           totalBrl={validationResult?.totalBrl || 0}
+          isSaving={isSaving}
+        />
+
+        <SaveErrorModal
+          open={showSaveErrorModal}
+          onClose={() => setShowSaveErrorModal(false)}
+          message={saveErrorMessage || undefined}
         />
       </div>
     </div>
