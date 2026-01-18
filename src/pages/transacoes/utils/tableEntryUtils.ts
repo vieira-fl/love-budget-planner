@@ -145,11 +145,12 @@ export const mergeOptions = (
 };
 
 export const sumBRL = (values: Array<string | number>): number => {
-  return values.reduce((acc, value) => {
+  let total = 0;
+  for (const value of values) {
     const parsed = typeof value === "number" ? value : parseBRL(value);
-    if (parsed === null) {
-      return acc;
+    if (parsed !== null) {
+      total += parsed;
     }
-    return acc + parsed;
-  }, 0);
+  }
+  return total;
 };
