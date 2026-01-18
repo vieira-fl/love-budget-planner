@@ -1,5 +1,6 @@
 import { TransactionRow, ErrorsByCell } from "../types";
 import { formatBRLDisplay } from "./tableEntryUtils";
+import { PaymentMethod } from "@/types/finance";
 
 export interface CsvParseResult {
   rows: TransactionRow[];
@@ -89,6 +90,12 @@ const COLUMN_MAPPINGS: Record<string, keyof TransactionRow> = {
   tagdespesa: "tagDespesa",
   tags: "tagDespesa",
   
+  // Payment method
+  formapgto: "formaPgto",
+  formadepagamento: "formaPgto",
+  paymentmethod: "formaPgto",
+  pagamento: "formaPgto",
+  
   // Include in split
   incluirrateio: "incluirRateio",
   rateio: "incluirRateio",
@@ -177,6 +184,7 @@ export function parseCsvContent(
       responsavel: defaultResponsavel,
       categoria: "",
       tipo: "Pontual", // Default to "Pontual" when importing
+      formaPgto: "Cartão", // Default payment method
       tagDespesa: "",
       incluirRateio: true,
       parcelado: false,
@@ -190,6 +198,13 @@ export function parseCsvContent(
         row.incluirRateio = parseBoolean(value, true);
       } else if (field === "parcelado") {
         row.parcelado = parseBoolean(value, false);
+      } else if (field === "formaPgto") {
+        // Validate payment method or default to Cartão
+        const validMethods: PaymentMethod[] = ["Cartão", "PIX", "TED", "Cash"];
+        const normalized = value.trim();
+        row.formaPgto = validMethods.includes(normalized as PaymentMethod) 
+          ? (normalized as PaymentMethod) 
+          : "Cartão";
       } else if (field === "data") {
         row.data = value;
       } else if (field === "descricao") {

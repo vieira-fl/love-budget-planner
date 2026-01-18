@@ -23,7 +23,7 @@ interface CumulativeDataPoint {
 }
 
 export function CumulativeChart({ transactions }: CumulativeChartProps) {
-  const [xAxisUnit, setXAxisUnit] = useState<'daily' | 'monthly'>('daily');
+  const [xAxisUnit, setXAxisUnit] = useState<'daily' | 'monthly'>('monthly');
 
   const dailyData = useMemo((): CumulativeDataPoint[] => {
     if (transactions.length === 0) return [];
@@ -96,7 +96,9 @@ export function CumulativeChart({ transactions }: CumulativeChartProps) {
       cumulativeExpenses += values.expenses;
       const cumulativeBalance = cumulativeIncome - cumulativeExpenses;
 
-      const monthDate = new Date(`${monthKey}-01`);
+      // Parse yyyy-MM correctly by splitting to avoid timezone issues
+      const [year, month] = monthKey.split('-').map(Number);
+      const monthDate = new Date(year, month - 1, 15); // Use day 15 to avoid any edge issues
 
       return {
         label: format(monthDate, 'MMM/yy', { locale: ptBR }),

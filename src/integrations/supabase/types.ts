@@ -74,6 +74,7 @@ export type Database = {
           description: string
           id: string
           include_in_split: boolean
+          payment_method: string | null
           person: string
           recurrence: string | null
           tag: string | null
@@ -89,6 +90,7 @@ export type Database = {
           description: string
           id?: string
           include_in_split?: boolean
+          payment_method?: string | null
           person: string
           recurrence?: string | null
           tag?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           description?: string
           id?: string
           include_in_split?: boolean
+          payment_method?: string | null
           person?: string
           recurrence?: string | null
           tag?: string | null
