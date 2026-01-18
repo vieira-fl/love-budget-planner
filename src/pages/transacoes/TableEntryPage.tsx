@@ -297,21 +297,18 @@ function TableEntryContent() {
     setShowClearModal(false);
   };
 
-  const mapTransactionType = (tipo: string): TransactionType => {
-    const normalized = tipo.trim().toLowerCase();
-    if (normalized.includes("receita") || normalized.includes("income")) {
-      return "income";
-    }
-    return "expense";
-  };
-
   const parseDatePtBr = (value: string): Date => {
     const [day, month, year] = value.split("/").map(Number);
     return new Date(year, (month ?? 1) - 1, day ?? 1);
   };
 
-  const mapRecurrence = (parcelado: boolean): RecurrenceType =>
-    parcelado ? "recorrente" : "pontual";
+  const mapRecurrence = (tipo: string): RecurrenceType => {
+    const normalized = tipo.trim().toLowerCase();
+    if (normalized === "recorrente") {
+      return "recorrente";
+    }
+    return "pontual";
+  };
 
   const buildTransactionsPayload = (): Omit<Transaction, "id">[] => {
     return rows.map((row) => {
@@ -324,8 +321,9 @@ function TableEntryContent() {
         throw new Error("Data inválida encontrada na tabela.");
       }
 
-      const type = mapTransactionType(row.tipo);
-      const includeInSplit = type === "expense" ? row.incluirRateio : false;
+      // All table entries are expenses by default
+      const type: TransactionType = "expense";
+      const includeInSplit = row.incluirRateio;
 
       return {
         type,
@@ -335,7 +333,7 @@ function TableEntryContent() {
         amount,
         person: row.responsavel.trim(),
         date: parsedDate,
-        recurrence: mapRecurrence(row.parcelado),
+        recurrence: mapRecurrence(row.tipo),
         includeInSplit,
       };
     });

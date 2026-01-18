@@ -84,7 +84,7 @@ export function useTableEntry({ defaultResponsavel, userId }: UseTableEntryArgs)
       brl: "",
       responsavel: defaultResponsavel,
       categoria: "",
-      tipo: "",
+      tipo: "Pontual",
       tagDespesa: "",
       incluirRateio: true,
       parcelado: false,
