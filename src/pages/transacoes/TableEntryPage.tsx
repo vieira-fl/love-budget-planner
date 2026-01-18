@@ -1,12 +1,11 @@
-import { Component, ReactNode, useState } from "react";
+import { Component, ReactNode, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { EditableTable } from "./components/EditableTable";
@@ -124,10 +123,34 @@ function TableEntryContent() {
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const responsaveis = [userName];
   const hasSelectedRows = selectedRows.size > 0;
   const hasRows = rows.length > 0;
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingFile(true);
+    // Handler for file processing - logic will be implemented in next checkpoint
+    console.log("File selected:", file.name, file.type, file.size);
+    
+    // Reset input so user can select same file again if needed
+    event.target.value = "";
+    
+    // Simulate processing feedback (actual parsing will be in next checkpoint)
+    setTimeout(() => {
+      setIsProcessingFile(false);
+    }, 1000);
+  };
 
   const handleValidate = () => {
     if (rows.length === 0) {
@@ -300,17 +323,30 @@ function TableEntryContent() {
                 Limpar tabela
               </Button>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button disabled variant="outline">
-                      <Upload className="mr-2 h-4 w-4" />
-                      Preencher por arquivo
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>Disponível no Checkpoint C</TooltipContent>
-              </Tooltip>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.xml"
+                onChange={handleFileSelected}
+                className="hidden"
+              />
+              <Button 
+                onClick={handleFileButtonClick} 
+                variant="outline"
+                disabled={isProcessingFile}
+              >
+                {isProcessingFile ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processando arquivo…
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Preencher por arquivo
+                  </>
+                )}
+              </Button>
 
               <Button onClick={handleValidate}>
                 <Check className="mr-2 h-4 w-4" />
