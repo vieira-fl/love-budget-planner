@@ -83,7 +83,7 @@ export function useTableEntry({ defaultResponsavel, userId }: UseTableEntryArgs)
       descricao: "",
       brl: "",
       responsavel: defaultResponsavel,
-      categoria: "",
+      categoria: "Outros",
       tipo: "Pontual",
       tagDespesa: "",
       incluirRateio: true,

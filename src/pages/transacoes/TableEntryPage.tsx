@@ -1,4 +1,4 @@
-import { Component, ReactNode, useState, useRef } from "react";
+import { Component, ReactNode, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
@@ -8,6 +8,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw, Loader2, CheckCircle2, XCircle, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTransactions } from "@/hooks/useTransactions";
 import { supabase } from "@/integrations/supabase/client";
 import { EditableTable } from "./components/EditableTable";
 import { ConfirmationModal, ErrorsModal, InfoModal, SaveErrorModal, ClearConfirmModal } from "./components/ValidationModals";
@@ -104,8 +105,14 @@ function FeatureDisabled() {
 function TableEntryContent() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
+  const { expenseCategoryLabels } = useTransactions();
   const userName = profile?.username || "Usuário logado";
   const userId = user?.id || profile?.user_id || "default";
+
+  const categoryOptions = useMemo(
+    () => Object.values(expenseCategoryLabels),
+    [expenseCategoryLabels]
+  );
   
   const {
     rows,
@@ -529,7 +536,7 @@ function TableEntryContent() {
               selectedRows={selectedRows}
               errorsByCell={errorsByCell}
               responsaveis={responsaveis}
-              categories={options.categories}
+              categories={categoryOptions}
               types={options.types}
               tags={options.tags}
               onRowChange={updateRow}
