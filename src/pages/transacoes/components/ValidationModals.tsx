@@ -46,14 +46,23 @@ export function ErrorsModal({ open, onClose, errorList }: ErrorsModalProps) {
   );
 }
 
-interface SuccessModalProps {
+interface ConfirmationModalProps {
   open: boolean;
-  onClose: () => void;
+  onConfirm: () => void;
+  onReturn: () => void;
   validCount: number;
   totalBrl: number;
+  isSaving: boolean;
 }
 
-export function SuccessModal({ open, onClose, validCount, totalBrl }: SuccessModalProps) {
+export function ConfirmationModal({
+  open,
+  onConfirm,
+  onReturn,
+  validCount,
+  totalBrl,
+  isSaving,
+}: ConfirmationModalProps) {
   const formatCurrency = (value: number) => {
     return value.toLocaleString("pt-BR", {
       style: "currency",
@@ -62,29 +71,41 @@ export function SuccessModal({ open, onClose, validCount, totalBrl }: SuccessMod
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && !isSaving) {
+          onReturn();
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-500" />
-            <DialogTitle>Validação OK</DialogTitle>
+            <DialogTitle>Confirmar transações</DialogTitle>
           </div>
           <DialogDescription>
-            Todas as linhas estão válidas e prontas para serem adicionadas.
+            As linhas estão validadas. Confirme para registrar as transações.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-4">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Linhas válidas:</span>
+            <span className="text-muted-foreground">Transações prontas para adicionar:</span>
             <span className="font-medium">{validCount}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Total (somatório):</span>
+            <span className="text-muted-foreground">Total BRL:</span>
             <span className="font-medium">{formatCurrency(totalBrl)}</span>
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={onClose}>Fechar</Button>
+          <Button variant="outline" onClick={onReturn} disabled={isSaving}>
+            Retornar
+          </Button>
+          <Button onClick={onConfirm} disabled={isSaving}>
+            {isSaving ? "Salvando..." : "Confirmar"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -111,6 +132,33 @@ export function InfoModal({ open, onClose, title, message }: InfoModalProps) {
         </DialogHeader>
         <DialogFooter>
           <Button onClick={onClose}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface SaveErrorModalProps {
+  open: boolean;
+  onClose: () => void;
+  message?: string;
+}
+
+export function SaveErrorModal({ open, onClose, message }: SaveErrorModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[450px]">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <XCircle className="h-5 w-5 text-destructive" />
+            <DialogTitle>Não foi possível salvar as transações</DialogTitle>
+          </div>
+          <DialogDescription>
+            {message || "Tente novamente em instantes."}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={onClose}>Retornar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
