@@ -11,8 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { EditableTable } from "./components/EditableTable";
 import { ConfirmationModal, ErrorsModal, InfoModal, SaveErrorModal, ClearConfirmModal } from "./components/ValidationModals";
 import { useTableEntry } from "./hooks/useTableEntry";
-import { ValidationResult } from "./types";
-import { parseBRL } from "./utils/tableEntryUtils";
+import { ErrorsByCell, TransactionRow, ValidationResult } from "./types";
+import { isValidDatePtBr, parseBRL, sanitizeBRLInput } from "./utils/tableEntryUtils";
 import { Transaction, TransactionType, RecurrenceType } from "@/types/finance";
 
 // Error Boundary for fallback protection
@@ -110,6 +110,7 @@ function TableEntryContent() {
     selectAll,
     deleteSelected,
     clearAll,
+    appendRows,
     registerOption,
     formatBrlOnBlur,
     validate,
@@ -124,6 +125,15 @@ function TableEntryContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [importModal, setImportModal] = useState<{
+    open: boolean;
+    title: string;
+    message: ReactNode;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -135,21 +145,306 @@ function TableEntryContent() {
     fileInputRef.current?.click();
   };
 
-  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const REQUIRED_FIELDS = ["data", "descricao", "brl"];
+
+  const normalizeHeader = (value: string) => value.trim().toLowerCase();
+
+  const inferDelimiter = (line: string) => {
+    const commaCount = (line.match(/,/g) || []).length;
+    const semicolonCount = (line.match(/;/g) || []).length;
+    return semicolonCount > commaCount ? ";" : ",";
+  };
+
+  const parseDelimitedLine = (line: string, delimiter: string) => {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const char = line[i];
+      if (char === "\"") {
+        const nextChar = line[i + 1];
+        if (inQuotes && nextChar === "\"") {
+          current += "\"";
+          i += 1;
+          continue;
+        }
+        inQuotes = !inQuotes;
+        continue;
+      }
+      if (char === delimiter && !inQuotes) {
+        result.push(current);
+        current = "";
+        continue;
+      }
+      current += char;
+    }
+    result.push(current);
+    return result;
+  };
+
+  const normalizeDateToPtBr = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return "";
+    }
+
+    const normalizeParts = (day: string, month: string, year: string) => {
+      const normalizedYear = year.length === 2 ? `20${year}` : year;
+      return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${normalizedYear}`;
+    };
+
+    const matchPt = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (matchPt) {
+      return normalizeParts(matchPt[1], matchPt[2], matchPt[3]);
+    }
+
+    const matchIso = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (matchIso) {
+      return normalizeParts(matchIso[3], matchIso[2], matchIso[1]);
+    }
+
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) {
+      return normalizeParts(
+        String(parsed.getDate()),
+        String(parsed.getMonth() + 1),
+        String(parsed.getFullYear())
+      );
+    }
+
+    return trimmed;
+  };
+
+  const buildRow = (dataValue: string, descricaoValue: string, brlValue: string) => {
+    const id = crypto.randomUUID();
+    const normalizedDate = normalizeDateToPtBr(dataValue);
+    const sanitizedBrl = sanitizeBRLInput(brlValue);
+    const descricao = descricaoValue.trim();
+
+    const row: TransactionRow = {
+      id,
+      data: normalizedDate,
+      descricao,
+      brl: sanitizedBrl,
+      responsavel: userName,
+      categoria: "",
+      tipo: "",
+      tagDespesa: "",
+      incluirRateio: true,
+      parcelado: false,
+    };
+
+    const rowErrors: Partial<Record<keyof TransactionRow, string>> = {};
+
+    if (!normalizedDate) {
+      rowErrors.data = "obrigatório";
+    } else if (!isValidDatePtBr(normalizedDate)) {
+      rowErrors.data = "inválido";
+    }
+
+    if (!descricao) {
+      rowErrors.descricao = "obrigatório";
+    }
+
+    if (!sanitizedBrl) {
+      rowErrors.brl = "obrigatório";
+    } else if (parseBRL(sanitizedBrl) === null) {
+      rowErrors.brl = "inválido";
+    }
+
+    return { row, rowErrors };
+  };
+
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsProcessingFile(true);
-    // Handler for file processing - logic will be implemented in next checkpoint
-    console.log("File selected:", file.name, file.type, file.size);
-    
-    // Reset input so user can select same file again if needed
-    event.target.value = "";
-    
-    // Simulate processing feedback (actual parsing will be in next checkpoint)
-    setTimeout(() => {
+    try {
+      const text = await file.text();
+      const extension = file.name.split(".").pop()?.toLowerCase();
+
+      let rowsToAppend: TransactionRow[] = [];
+      const nextErrors: ErrorsByCell = {};
+      const alertRowIds = new Set<string>();
+      const foundFields = new Set<string>();
+
+      if (!text.trim()) {
+        throw new Error("O arquivo está vazio.");
+      }
+
+      if (extension === "csv") {
+        const lines = text.split(/\r?\n/);
+        const headerIndex = lines.findIndex((line) => line.trim().length > 0);
+        if (headerIndex === -1) {
+          throw new Error("O arquivo está vazio.");
+        }
+
+        const headerLine = lines[headerIndex];
+        const delimiter = inferDelimiter(headerLine);
+        const headerValues = parseDelimitedLine(headerLine, delimiter).map(normalizeHeader);
+        headerValues.forEach((value) => {
+          if (value) {
+            foundFields.add(value);
+          }
+        });
+
+        const headerMap = new Map<string, number>();
+        headerValues.forEach((value, index) => {
+          if (value) {
+            headerMap.set(value, index);
+          }
+        });
+
+        const missingFields = REQUIRED_FIELDS.filter((field) => !headerMap.has(field));
+        if (missingFields.length > 0) {
+          throw new Error(
+            `Campos encontrados: ${Array.from(foundFields).join(", ") || "nenhum"}. ` +
+              `Campos obrigatórios: ${REQUIRED_FIELDS.join(", ")}.`
+          );
+        }
+
+        for (let i = headerIndex + 1; i < lines.length; i += 1) {
+          const line = lines[i];
+          if (!line.trim()) {
+            continue;
+          }
+          const columns = parseDelimitedLine(line, delimiter);
+          const dataValue = columns[headerMap.get("data") ?? -1] ?? "";
+          const descricaoValue = columns[headerMap.get("descricao") ?? -1] ?? "";
+          const brlValue = columns[headerMap.get("brl") ?? -1] ?? "";
+          const { row, rowErrors } = buildRow(dataValue, descricaoValue, brlValue);
+          if (Object.keys(rowErrors).length > 0) {
+            nextErrors[row.id] = rowErrors;
+            alertRowIds.add(row.id);
+          }
+          rowsToAppend.push(row);
+        }
+      } else if (extension === "xml") {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(text, "application/xml");
+        if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+          throw new Error("Não foi possível ler o XML informado.");
+        }
+
+        const allElements = Array.from(xmlDoc.getElementsByTagName("*"));
+        const recordTags = ["row", "item", "transaction", "lancamento"];
+        let recordElements = allElements.filter((el) =>
+          recordTags.includes(el.tagName.toLowerCase())
+        );
+
+        if (recordElements.length === 0) {
+          recordElements = allElements.filter((el) => {
+            const childTags = Array.from(el.children).map((child) =>
+              child.tagName.toLowerCase()
+            );
+            const attributes = Array.from(el.attributes).map((attr) =>
+              attr.name.toLowerCase()
+            );
+            const available = new Set([...childTags, ...attributes]);
+            REQUIRED_FIELDS.forEach((field) => {
+              if (available.has(field)) {
+                foundFields.add(field);
+              }
+            });
+            return REQUIRED_FIELDS.some((field) => available.has(field));
+          });
+        }
+
+        if (recordElements.length === 0) {
+          throw new Error("Não foi possível reconhecer a estrutura do XML.");
+        }
+
+        recordElements.forEach((record) => {
+          const fieldNames = [
+            ...Array.from(record.attributes).map((attr) => attr.name.toLowerCase()),
+            ...Array.from(record.children).map((child) => child.tagName.toLowerCase()),
+            ...Array.from(record.getElementsByTagName("*")).map((child) =>
+              child.tagName.toLowerCase()
+            ),
+          ];
+          fieldNames.forEach((name) => foundFields.add(name));
+        });
+
+        const missingFields = REQUIRED_FIELDS.filter((field) => !foundFields.has(field));
+        if (missingFields.length > 0) {
+          throw new Error(
+            `Campos encontrados: ${Array.from(foundFields).join(", ") || "nenhum"}. ` +
+              `Campos obrigatórios: ${REQUIRED_FIELDS.join(", ")}.`
+          );
+        }
+
+        const getFieldValue = (record: Element, field: string) => {
+          const attribute = Array.from(record.attributes).find(
+            (attr) => attr.name.toLowerCase() === field
+          );
+          if (attribute) {
+            return attribute.value;
+          }
+          const directChild = Array.from(record.children).find(
+            (child) => child.tagName.toLowerCase() === field
+          );
+          if (directChild) {
+            return directChild.textContent ?? "";
+          }
+          const descendant = Array.from(record.getElementsByTagName("*")).find(
+            (child) => child.tagName.toLowerCase() === field
+          );
+          return descendant?.textContent ?? "";
+        };
+
+        recordElements.forEach((record) => {
+          const dataValue = getFieldValue(record, "data");
+          const descricaoValue = getFieldValue(record, "descricao");
+          const brlValue = getFieldValue(record, "brl");
+          const { row, rowErrors } = buildRow(dataValue, descricaoValue, brlValue);
+          if (Object.keys(rowErrors).length > 0) {
+            nextErrors[row.id] = rowErrors;
+            alertRowIds.add(row.id);
+          }
+          rowsToAppend.push(row);
+        });
+      } else {
+        throw new Error("Formato de arquivo não suportado. Use CSV ou XML.");
+      }
+
+      if (rowsToAppend.length === 0) {
+        throw new Error("Nenhuma linha válida foi encontrada no arquivo.");
+      }
+
+      appendRows(rowsToAppend, nextErrors);
+
+      const alertCount = alertRowIds.size;
+      const messageLines = [
+        `Linhas adicionadas: ${rowsToAppend.length}`,
+        alertCount > 0 ? `Linhas com alertas: ${alertCount}` : null,
+      ].filter(Boolean) as string[];
+
+      setImportModal({
+        open: true,
+        title: "Importação para a tabela concluída",
+        message: (
+          <div className="space-y-1">
+            {messageLines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        ),
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível importar o arquivo.";
+      setImportModal({
+        open: true,
+        title: "Arquivo inválido",
+        message,
+      });
+    } finally {
       setIsProcessingFile(false);
-    }, 1000);
+      event.target.value = "";
+    }
   };
 
   const handleValidate = () => {
@@ -423,6 +718,18 @@ function TableEntryContent() {
           open={showSaveErrorModal}
           onClose={() => setShowSaveErrorModal(false)}
           message={saveErrorMessage || undefined}
+        />
+
+        <InfoModal
+          open={importModal.open}
+          onClose={() =>
+            setImportModal((prev) => ({
+              ...prev,
+              open: false,
+            }))
+          }
+          title={importModal.title}
+          message={importModal.message}
         />
       </div>
     </div>
