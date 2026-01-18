@@ -162,20 +162,18 @@ export function EditableTable({
                   />
                 </TableCell>
                 <TableCell>
-                  <Input
+                  <Select
                     value={row.tipo}
-                    onChange={(e) => onRowChange(row.id, "tipo", e.target.value)}
-                    onBlur={(e) => onOptionCommit("tipo", e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        onOptionCommit("tipo", e.currentTarget.value);
-                      }
-                    }}
-                    list="table-entry-types"
-                    placeholder="Tipo"
-                    className={cn("h-8", tipoError && errorClass)}
-                    title={tipoError}
-                  />
+                    onValueChange={(value) => onRowChange(row.id, "tipo", value)}
+                  >
+                    <SelectTrigger className={cn("h-8", tipoError && errorClass)} title={tipoError}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pontual">Pontual</SelectItem>
+                      <SelectItem value="Recorrente">Recorrente</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell>
                   <Input

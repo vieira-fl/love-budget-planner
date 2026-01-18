@@ -43,10 +43,8 @@ export const DEFAULT_CATEGORIES = [
 ];
 
 export const DEFAULT_TYPES = [
-  "Despesa",
-  "Receita",
-  "Transferência",
-  "Estorno",
+  "Pontual",
+  "Recorrente",
 ];
 
 export const DEFAULT_TAGS: string[] = [];

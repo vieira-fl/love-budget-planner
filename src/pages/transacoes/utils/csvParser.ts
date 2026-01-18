@@ -176,7 +176,7 @@ export function parseCsvContent(
       brl: "",
       responsavel: defaultResponsavel,
       categoria: "",
-      tipo: "Despesa", // Default to "Despesa" when importing
+      tipo: "Pontual", // Default to "Pontual" when importing
       tagDespesa: "",
       incluirRateio: true,
       parcelado: false,
