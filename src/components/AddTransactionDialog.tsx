@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType } from '@/types/finance';
+import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, normalizeCategoryKey } from '@/types/finance';
 import { Plus, PlusCircle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -128,7 +128,7 @@ export function AddTransactionDialog({
   const handleAddNewCategory = () => {
     if (!newCategoryName.trim()) return;
     
-    const key = newCategoryName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_');
+    const key = normalizeCategoryKey(newCategoryName, type);
     
     if (type === 'expense') {
       onAddExpenseCategory(key, newCategoryName);

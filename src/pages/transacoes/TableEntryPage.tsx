@@ -15,7 +15,7 @@ import { useTableEntry } from "./hooks/useTableEntry";
 import { ValidationResult } from "./types";
 import { parseBRL } from "./utils/tableEntryUtils";
 import { parseCsvContent } from "./utils/csvParser";
-import { Transaction, TransactionType, RecurrenceType } from "@/types/finance";
+import { Transaction, TransactionType, RecurrenceType, normalizeCategoryKey } from "@/types/finance";
 
 type FileStatus = {
   type: "success" | "error";
@@ -327,7 +327,7 @@ function TableEntryContent() {
 
       return {
         type,
-        category: row.categoria.trim(),
+        category: normalizeCategoryKey(row.categoria, "expense"),
         description: row.descricao.trim(),
         tag: row.tagDespesa?.trim() || undefined,
         amount,

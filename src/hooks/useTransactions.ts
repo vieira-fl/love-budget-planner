@@ -11,6 +11,7 @@ import {
   defaultThreshold,
   defaultExpenseCategoryLabels,
   defaultIncomeCategoryLabels,
+  normalizeCategoryKey,
   MonthlyComparison,
   CategoryChange,
   MonthlyBalanceSummary
@@ -55,7 +56,7 @@ const mapRecurrenceToDb = (frontendValue: 'pontual' | 'recorrente'): string => {
 const mapDbToTransaction = (db: DbTransaction): Transaction => ({
   id: db.id,
   type: db.type as 'income' | 'expense',
-  category: db.category,
+  category: normalizeCategoryKey(db.category, db.type as 'income' | 'expense'),
   description: db.description,
   tag: db.tag || undefined,
   amount: Number(db.amount),

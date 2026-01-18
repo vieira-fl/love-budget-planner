@@ -31,14 +31,16 @@ export interface TransactionOptions {
 
 // Default options for dropdowns
 export const DEFAULT_CATEGORIES = [
-  "Alimentação",
   "Transporte",
+  "Alimentação",
   "Moradia",
-  "Saúde",
-  "Lazer",
-  "Educação",
   "Assinaturas",
-  "Impostos",
+  "Streaming",
+  "Pet",
+  "Saúde",
+  "Educação",
+  "Lazer",
+  "Vestuário",
   "Outros",
 ];
 

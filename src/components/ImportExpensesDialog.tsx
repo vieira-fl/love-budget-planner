@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Transaction, RecurrenceType } from '@/types/finance';
+import { Transaction, RecurrenceType, normalizeCategoryKey } from '@/types/finance';
 import { FileUp, Info, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface ImportExpensesDialogProps {
@@ -154,7 +154,10 @@ export function ImportExpensesDialog({
         return;
       }
 
-      const category = (getValue(row, 'categoria') || 'outros').toLowerCase();
+      const category = normalizeCategoryKey(
+        getValue(row, 'categoria') || 'outros',
+        'expense'
+      );
       const recurrence = parseRecurrence(getValue(row, 'recorrencia'));
       const includeInSplit = parseBoolean(getValue(row, 'incluir_no_rateio'), true);
 
