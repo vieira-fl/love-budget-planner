@@ -1,4 +1,5 @@
 import { TransactionRow, ErrorsByCell } from "../types";
+import { formatBRLDisplay } from "./tableEntryUtils";
 
 export interface CsvParseResult {
   rows: TransactionRow[];
@@ -175,7 +176,7 @@ export function parseCsvContent(
       brl: "",
       responsavel: defaultResponsavel,
       categoria: "",
-      tipo: "",
+      tipo: "Despesa", // Default to "Despesa" when importing
       tagDespesa: "",
       incluirRateio: true,
       parcelado: false,
@@ -194,7 +195,8 @@ export function parseCsvContent(
       } else if (field === "descricao") {
         row.descricao = value;
       } else if (field === "brl") {
-        row.brl = value;
+        // Format value as currency with 2 decimal places
+        row.brl = value ? formatBRLDisplay(value) : "";
       } else if (field === "responsavel") {
         row.responsavel = value || defaultResponsavel;
       } else if (field === "categoria") {
