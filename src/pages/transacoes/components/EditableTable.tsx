@@ -146,20 +146,21 @@ export function EditableTable({
                   </Select>
                 </TableCell>
                 <TableCell>
-                  <Input
-                    value={row.categoria}
-                    onChange={(e) => onRowChange(row.id, "categoria", e.target.value)}
-                    onBlur={(e) => onOptionCommit("categoria", e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        onOptionCommit("categoria", e.currentTarget.value);
-                      }
-                    }}
-                    list="table-entry-categories"
-                    placeholder="Categoria"
-                    className={cn("h-8", categoriaError && errorClass)}
-                    title={categoriaError}
-                  />
+                  <Select
+                    value={row.categoria || ""}
+                    onValueChange={(value) => onRowChange(row.id, "categoria", value)}
+                  >
+                    <SelectTrigger className={cn("h-8", categoriaError && errorClass)} title={categoriaError}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell>
                   <Select
@@ -209,11 +210,6 @@ export function EditableTable({
           })}
         </TableBody>
       </Table>
-      <datalist id="table-entry-categories">
-        {categories.map((category) => (
-          <option key={category} value={category} />
-        ))}
-      </datalist>
       <datalist id="table-entry-types">
         {types.map((type) => (
           <option key={type} value={type} />
