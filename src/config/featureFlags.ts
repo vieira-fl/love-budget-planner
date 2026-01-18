@@ -4,5 +4,5 @@
 export const FEATURE_FLAGS = {
   // Controls access to the table-based transaction entry page
   // Set VITE_ENABLE_TABLE_ENTRY=true in .env to enable
-  ENABLE_TABLE_ENTRY: import.meta.env.VITE_ENABLE_TABLE_ENTRY === 'true' || false,
+  ENABLE_TABLE_ENTRY: true,
 } as const;
