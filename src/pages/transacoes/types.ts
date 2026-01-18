@@ -29,18 +29,17 @@ export interface TransactionOptions {
   tags: string[];
 }
 
-// Default options for dropdowns
+// Default options for dropdowns - matching AddTransactionDialog categories
 export const DEFAULT_CATEGORIES = [
-  "Transporte",
-  "Alimentação",
   "Moradia",
-  "Assinaturas",
-  "Streaming",
-  "Pet",
+  "Alimentação",
+  "Transporte",
   "Saúde",
   "Educação",
   "Lazer",
+  "Streaming/Assinaturas",
   "Vestuário",
+  "Pets",
   "Outros",
 ];
 
@@ -50,3 +49,6 @@ export const DEFAULT_TYPES = [
 ];
 
 export const DEFAULT_TAGS: string[] = [];
+
+export type SortField = keyof TransactionRow | null;
+export type SortDirection = 'asc' | 'desc';
