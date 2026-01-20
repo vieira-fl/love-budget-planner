@@ -41,11 +41,17 @@ function parseCsvLine(line: string, separator = ";"): string[] {
 }
 
 /**
- * Try to detect the CSV separator (semicolon or comma)
+ * Try to detect the CSV separator (tab, semicolon or comma)
  */
 function detectSeparator(headerLine: string): string {
+  const tabCount = (headerLine.match(/\t/g) || []).length;
   const semicolonCount = (headerLine.match(/;/g) || []).length;
   const commaCount = (headerLine.match(/,/g) || []).length;
+  
+  // Prioritize tab, then semicolon, then comma
+  if (tabCount >= semicolonCount && tabCount >= commaCount && tabCount > 0) {
+    return "\t";
+  }
   return semicolonCount >= commaCount ? ";" : ",";
 }
 
@@ -64,11 +70,8 @@ const COLUMN_MAPPINGS: Record<string, keyof TransactionRow> = {
   description: "descricao",
   desc: "descricao",
   
-  // Value
+  // Value - only "brl" as required
   brl: "brl",
-  valor: "brl",
-  value: "brl",
-  amount: "brl",
   
   // Person
   responsavel: "responsavel",
@@ -172,18 +175,13 @@ export function parseCsvContent(
   const missingFields = requiredFields.filter(field => !mappedFields.has(field));
 
   if (missingFields.length > 0) {
-    const fieldNames = missingFields.map(f => {
-      if (f === "data") return "data";
-      if (f === "descricao") return "descricao";
-      if (f === "brl") return "brl/valor";
-      return f;
-    }).join(", ");
+    const fieldNames = missingFields.join(", ");
     
     return {
       rows: [],
       errors: {},
       parseErrors: [
-        `Colunas obrigatórias não encontradas: ${fieldNames}. O arquivo deve conter as colunas: data, descricao, brl (ou valor).`,
+        `Colunas obrigatórias não encontradas: ${fieldNames}. O arquivo deve conter as colunas: data, descricao, brl.`,
       ],
     };
   }
