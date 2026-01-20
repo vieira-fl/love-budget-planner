@@ -155,12 +155,24 @@ export function parseCsvContent(
     }
   });
 
-  if (fieldMap.size === 0) {
+  // Check for required columns: data, descricao, brl
+  const mappedFields = new Set(fieldMap.values());
+  const requiredFields: (keyof TransactionRow)[] = ["data", "descricao", "brl"];
+  const missingFields = requiredFields.filter(field => !mappedFields.has(field));
+
+  if (missingFields.length > 0) {
+    const fieldNames = missingFields.map(f => {
+      if (f === "data") return "data";
+      if (f === "descricao") return "descricao";
+      if (f === "brl") return "brl/valor";
+      return f;
+    }).join(", ");
+    
     return {
       rows: [],
       errors: {},
       parseErrors: [
-        "Nenhuma coluna reconhecida no arquivo. Use: data, descricao, valor, responsavel, categoria, tipo.",
+        `Colunas obrigatórias não encontradas: ${fieldNames}. O arquivo deve conter as colunas: data, descricao, brl (ou valor).`,
       ],
     };
   }
@@ -223,9 +235,9 @@ export function parseCsvContent(
       }
     });
 
-    // Skip completely empty rows
-    const hasContent = row.data || row.descricao || row.brl || row.categoria;
-    if (!hasContent) {
+    // Skip rows that don't have at least one of the required fields
+    const hasRequiredContent = row.data || row.descricao || row.brl;
+    if (!hasRequiredContent) {
       continue;
     }
 
