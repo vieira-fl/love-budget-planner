@@ -148,12 +148,23 @@ export function parseCsvContent(
   // Map headers to field names
   const fieldMap: Map<number, keyof TransactionRow> = new Map();
   headers.forEach((header, index) => {
-    const normalized = header.toLowerCase().replace(/[^a-záàãâéêíóôõúç]/g, "");
+    // Remove quotes, spaces and normalize to lowercase
+    const cleaned = header.replace(/^["']|["']$/g, "").trim().toLowerCase();
+    // Remove special characters but keep letters (including accented)
+    const normalized = cleaned.replace(/[^a-záàãâéêíóôõúç]/g, "");
+    
+    console.log(`Header ${index}: "${header}" -> cleaned: "${cleaned}" -> normalized: "${normalized}"`);
+    
     const field = COLUMN_MAPPINGS[normalized];
     if (field) {
       fieldMap.set(index, field);
+      console.log(`  Mapped to field: "${field}"`);
+    } else {
+      console.log(`  No mapping found`);
     }
   });
+  
+  console.log("Mapped fields:", Array.from(fieldMap.values()));
 
   // Check for required columns: data, descricao, brl
   const mappedFields = new Set(fieldMap.values());
