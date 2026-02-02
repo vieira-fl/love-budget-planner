@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, PaymentMethod, PAYMENT_METHODS } from '@/types/finance';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { parseLocalDate } from '@/lib/date';
 
 interface EditTransactionDialogProps {
   transaction: Transaction | null;
@@ -62,7 +63,7 @@ export function EditTransactionDialog({
       description,
       tag: tag.trim() || undefined,
       amount: parseFloat(amount),
-      date: new Date(date),
+      date: parseLocalDate(date),
       recurrence,
       includeInSplit: type === 'expense' ? includeInSplit : false,
       paymentMethod: type === 'expense' ? paymentMethod : undefined,
