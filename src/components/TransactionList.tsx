@@ -1,9 +1,16 @@
-import { useState } from 'react';
-import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels } from '@/types/finance';
+import { useState, useMemo } from 'react';
+import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels, PAYMENT_METHODS } from '@/types/finance';
 import { cn } from '@/lib/utils';
-import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil, Tag as TagIcon } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil, Tag as TagIcon, CreditCard, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EditTransactionDialog } from './EditTransactionDialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,9 +37,49 @@ export function TransactionList({
   expenseCategoryLabels,
   incomeCategoryLabels,
 }: TransactionListProps) {
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [personFilter, setPersonFilter] = useState<string>('all');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+
+  // Derive filter options from transactions
+  const filterOptions = useMemo(() => {
+    const categories = new Set<string>();
+    const persons = new Set<string>();
+    
+    transactions.forEach(t => {
+      categories.add(t.category);
+      persons.add(t.person);
+    });
+    
+    return {
+      categories: Array.from(categories).sort(),
+      persons: Array.from(persons).sort(),
+    };
+  }, [transactions]);
+
+  // Apply filters
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      if (typeFilter !== 'all' && t.type !== typeFilter) return false;
+      if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
+      if (personFilter !== 'all' && t.person !== personFilter) return false;
+      if (paymentMethodFilter !== 'all' && t.paymentMethod !== paymentMethodFilter) return false;
+      return true;
+    });
+  }, [transactions, typeFilter, categoryFilter, personFilter, paymentMethodFilter]);
+
+  const hasActiveFilters = typeFilter !== 'all' || categoryFilter !== 'all' || personFilter !== 'all' || paymentMethodFilter !== 'all';
+
+  const clearFilters = () => {
+    setTypeFilter('all');
+    setCategoryFilter('all');
+    setPersonFilter('all');
+    setPaymentMethodFilter('all');
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -72,7 +119,7 @@ export function TransactionList({
     }
   };
 
-  const sortedTransactions = [...transactions].sort(
+  const sortedTransactions = [...filteredTransactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
@@ -80,7 +127,65 @@ export function TransactionList({
     <>
       <div className="bg-card rounded-xl card-shadow overflow-hidden">
         <div className="p-5 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Transações Recentes</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Transações Recentes</h2>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4 mr-1" />
+                Limpar
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="income">Receita</SelectItem>
+                <SelectItem value="expense">Despesa</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas categorias</SelectItem>
+                {filterOptions.categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>
+                    {expenseCategoryLabels[cat] || incomeCategoryLabels[cat] || cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={personFilter} onValueChange={setPersonFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {filterOptions.persons.map(person => (
+                  <SelectItem key={person} value={person}>{person}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Forma PGTO" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas formas</SelectItem>
+                {PAYMENT_METHODS.map(method => (
+                  <SelectItem key={method} value={method}>{method}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
           {sortedTransactions.map((transaction, index) => (
@@ -119,6 +224,15 @@ export function TransactionList({
                     <span className="text-xs text-muted-foreground">
                       {transaction.person}
                     </span>
+                    {transaction.type === 'expense' && transaction.paymentMethod && (
+                      <>
+                        <span className="text-xs text-muted-foreground">•</span>
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <CreditCard className="h-3 w-3" />
+                          {transaction.paymentMethod}
+                        </span>
+                      </>
+                    )}
                     <span className="text-xs text-muted-foreground">•</span>
                     <span className={cn(
                       'text-xs',
