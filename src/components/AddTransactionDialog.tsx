@@ -9,6 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, PaymentMethod, PAYMENT_METHODS, normalizeCategoryKey } from '@/types/finance';
 import { Plus, PlusCircle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { parseLocalDate } from '@/lib/date';
+import { format } from 'date-fns';
 
 interface AddTransactionDialogProps {
   onAdd: (transaction: Omit<Transaction, 'id'>) => void;
@@ -50,7 +52,7 @@ export function AddTransactionDialog({
   const [description, setDescription] = useState('');
   const [tag, setTag] = useState('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [recurrence, setRecurrence] = useState<RecurrenceType>('pontual');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cartão');
   const [includeInSplit, setIncludeInSplit] = useState(true);
@@ -61,11 +63,6 @@ export function AddTransactionDialog({
   const [enableMultiMonth, setEnableMultiMonth] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
   const [multiMonthYear, setMultiMonthYear] = useState(new Date().getFullYear());
-
-  const parseLocalDate = (dateStr: string) => {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, (m ?? 1) - 1, d ?? 1);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

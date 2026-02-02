@@ -19,6 +19,7 @@ import {
 } from '@/types/finance';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseLocalDate } from '@/lib/date';
 
 export interface PeriodFilter {
   startDate: Date | undefined;
@@ -63,7 +64,7 @@ const mapDbToTransaction = (db: DbTransaction): Transaction => ({
   tag: db.tag || undefined,
   amount: Number(db.amount),
   person: db.person,
-  date: new Date(db.date),
+  date: parseLocalDate(db.date),
   recurrence: mapRecurrenceFromDb(db.recurrence),
   includeInSplit: db.include_in_split,
   paymentMethod: db.payment_method as PaymentMethod | undefined,
