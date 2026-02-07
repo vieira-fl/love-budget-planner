@@ -460,6 +460,8 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     return {
       person1IncomePercentage,
       person2IncomePercentage,
+      person1SplitIncome: person1Income,
+      person2SplitIncome: person2Income,
       totalSharedExpenses,
       person1IdealShare,
       person2IdealShare,

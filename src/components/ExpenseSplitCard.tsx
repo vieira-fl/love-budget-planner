@@ -1,6 +1,6 @@
 import { SplitCalculation } from '@/types/finance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, ArrowRight, PiggyBank, TrendingUp, Scale } from 'lucide-react';
+import { Users, ArrowRight, PiggyBank, TrendingUp, Scale, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ExpenseSplitCardProps {
@@ -20,6 +20,8 @@ export function ExpenseSplitCard({ splitCalculation, person1Name, person2Name }:
   const {
     person1IncomePercentage,
     person2IncomePercentage,
+    person1SplitIncome,
+    person2SplitIncome,
     totalSharedExpenses,
     person1IdealShare,
     person2IdealShare,
@@ -30,6 +32,7 @@ export function ExpenseSplitCard({ splitCalculation, person1Name, person2Name }:
     settlement,
   } = splitCalculation;
 
+  const totalSplitIncome = person1SplitIncome + person2SplitIncome;
   const fromPersonName = settlement.fromPerson === 'pessoa1' ? person1Name : person2Name;
   const toPersonName = settlement.toPerson === 'pessoa1' ? person1Name : person2Name;
 
@@ -42,6 +45,52 @@ export function ExpenseSplitCard({ splitCalculation, person1Name, person2Name }:
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Base de Cálculo - Receitas e Despesas no Rateio */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Base de Cálculo do Rateio
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-primary/10 rounded-lg space-y-2">
+              <p className="text-sm font-medium text-foreground">{person1Name}</p>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Receita no rateio:</span>
+                  <span className="font-medium text-income">{formatCurrency(person1SplitIncome)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Despesa no rateio:</span>
+                  <span className="font-medium text-expense">{formatCurrency(person1ActualPaid)}</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 bg-secondary/50 rounded-lg space-y-2">
+              <p className="text-sm font-medium text-foreground">{person2Name}</p>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Receita no rateio:</span>
+                  <span className="font-medium text-income">{formatCurrency(person2SplitIncome)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Despesa no rateio:</span>
+                  <span className="font-medium text-expense">{formatCurrency(person2ActualPaid)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-2 bg-muted/50 rounded-lg text-center">
+              <p className="text-xs text-muted-foreground">Total receita no rateio</p>
+              <p className="text-base font-bold text-income">{formatCurrency(totalSplitIncome)}</p>
+            </div>
+            <div className="p-2 bg-muted/50 rounded-lg text-center">
+              <p className="text-xs text-muted-foreground">Total despesa no rateio</p>
+              <p className="text-base font-bold text-expense">{formatCurrency(totalSharedExpenses)}</p>
+            </div>
+          </div>
+        </div>
+
         {/* Income Contribution */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -57,18 +106,6 @@ export function ExpenseSplitCard({ splitCalculation, person1Name, person2Name }:
               <p className="text-sm text-muted-foreground">{person2Name}</p>
               <p className="text-xl font-bold text-foreground">{person2IncomePercentage.toFixed(1)}%</p>
             </div>
-          </div>
-        </div>
-
-        {/* Shared Expenses Summary */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Despesas Compartilhadas
-          </h4>
-          <div className="p-3 bg-muted/50 rounded-lg text-center">
-            <p className="text-sm text-muted-foreground">Total no rateio</p>
-            <p className="text-2xl font-bold text-foreground">{formatCurrency(totalSharedExpenses)}</p>
           </div>
         </div>
 

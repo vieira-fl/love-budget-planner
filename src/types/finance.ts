@@ -52,6 +52,8 @@ export interface Transaction {
 export interface SplitCalculation {
   person1IncomePercentage: number;
   person2IncomePercentage: number;
+  person1SplitIncome: number;
+  person2SplitIncome: number;
   totalSharedExpenses: number;
   person1IdealShare: number;
   person2IdealShare: number;
