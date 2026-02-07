@@ -371,6 +371,19 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     return summaries;
   }, [filteredTransactions]);
 
+  // Calculate income per person only from income included in split
+  const splitIncomeSummaries = useMemo(() => {
+    const summaries: Record<string, number> = {};
+    
+    filteredTransactions.forEach(t => {
+      if (t.type === 'income' && t.includeInSplit) {
+        summaries[t.person] = (summaries[t.person] || 0) + t.amount;
+      }
+    });
+    
+    return summaries;
+  }, [filteredTransactions]);
+
   // Calculate split calculation for the couple
   const splitCalculation = useMemo((): SplitCalculation | null => {
     if (uniquePeople.length < 2) return null;
@@ -381,8 +394,8 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     const person1Summary = personSummaries[person1] || { income: 0, expenses: 0 };
     const person2Summary = personSummaries[person2] || { income: 0, expenses: 0 };
     
-    const person1Income = person1Summary.income;
-    const person2Income = person2Summary.income;
+    const person1Income = splitIncomeSummaries[person1] || 0;
+    const person2Income = splitIncomeSummaries[person2] || 0;
     const totalIncome = person1Income + person2Income;
     
     // Calculate income percentage
