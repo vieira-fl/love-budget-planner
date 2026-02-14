@@ -5,7 +5,7 @@ import { SummaryCard } from '@/components/SummaryCard';
 import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
 import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
-import { ExpenseChart } from '@/components/ExpenseChart';
+import { PaymentMethodChart } from '@/components/PaymentMethodChart';
 import { Top10Expenses } from '@/components/Top10Expenses';
 import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
 import { PeriodFilter } from '@/components/PeriodFilter';
@@ -299,7 +299,7 @@ const Index = () => {
 
                   {/* Charts and Analysis */}
                   <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <ExpenseChart data={categoryAnalysis} />
+                    <PaymentMethodChart transactions={transactions} />
                     <div className="space-y-4">
                       <h2 className="text-lg font-semibold text-foreground">Análise por Categoria</h2>
                       <div className="max-h-[340px] overflow-y-auto">
