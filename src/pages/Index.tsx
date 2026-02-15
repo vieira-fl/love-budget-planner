@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2, FileUp } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2, FileUp, Settings } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { SummaryCard } from '@/components/SummaryCard';
 import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
@@ -168,6 +168,14 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.location.href = '/configuracoes'}
+                title="Configurações"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
               <UserMenu />
               <div className="flex items-center gap-2">
                 <AddTransactionDialog
