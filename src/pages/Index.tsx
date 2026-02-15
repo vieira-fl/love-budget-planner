@@ -49,6 +49,7 @@ const Index = () => {
     splitCalculation,
     uniquePeople,
     personSummaries,
+    paymentMethods,
   } = useTransactions({ startDate, endDate });
 
   const handleClearFilter = () => {
@@ -186,6 +187,7 @@ const Index = () => {
                   incomeCategoryLabels={incomeCategoryLabels}
                   onAddExpenseCategory={addExpenseCategory}
                   onAddIncomeCategory={addIncomeCategory}
+                  paymentMethods={paymentMethods}
                 />
                 <Button
                   variant="outline"
@@ -324,6 +326,7 @@ const Index = () => {
                       onUpdate={updateTransaction}
                       expenseCategoryLabels={expenseCategoryLabels}
                       incomeCategoryLabels={incomeCategoryLabels}
+                      paymentMethods={paymentMethods}
                     />
                   </section>
                 </TabsContent>

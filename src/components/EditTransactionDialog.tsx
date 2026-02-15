@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, PaymentMethod, PAYMENT_METHODS } from '@/types/finance';
+import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, PaymentMethod } from '@/types/finance';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { parseLocalDate } from '@/lib/date';
@@ -17,6 +17,7 @@ interface EditTransactionDialogProps {
   onSave: (transaction: Transaction) => void;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
+  paymentMethods?: string[];
 }
 
 export function EditTransactionDialog({ 
@@ -26,6 +27,7 @@ export function EditTransactionDialog({
   onSave, 
   expenseCategoryLabels,
   incomeCategoryLabels,
+  paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: EditTransactionDialogProps) {
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState<ExpenseCategory | IncomeCategory>('outros');
@@ -202,7 +204,7 @@ export function EditTransactionDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PAYMENT_METHODS.map((method) => (
+                  {paymentMethods.map((method) => (
                     <SelectItem key={method} value={method}>
                       {method}
                     </SelectItem>
