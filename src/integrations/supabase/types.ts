@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_list_items: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          list_type: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          list_type: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          list_type?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       person_settings: {
         Row: {
           created_at: string

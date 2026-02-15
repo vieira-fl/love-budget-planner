@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthModal } from '@/components/AuthModal';
-import { LogOut, User, LogIn } from 'lucide-react';
+import { LogOut, User, LogIn, Settings } from 'lucide-react';
 
 export function UserMenu() {
   const { user, profile, isAuthenticated, signOut, loading } = useAuth();
@@ -62,6 +62,10 @@ export function UserMenu() {
         <DropdownMenuItem className="gap-2">
           <User className="h-4 w-4" />
           Perfil
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onClick={() => window.location.href = '/configuracoes'}>
+          <Settings className="h-4 w-4" />
+          Configurações
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
