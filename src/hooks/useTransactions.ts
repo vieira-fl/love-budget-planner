@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useCustomLists } from '@/hooks/useCustomLists';
 import { 
   Transaction, 
   ExpenseCategory,
@@ -77,6 +78,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
   const [customIncomeCategories, setCustomIncomeCategories] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
+  const { getItemsByType, initialized, seedDefaults, loading: listsLoading } = useCustomLists();
 
   // Fetch transactions from Supabase
   const fetchTransactions = useCallback(async () => {
@@ -148,15 +150,39 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     });
   }, [transactions, periodFilter?.startDate, periodFilter?.endDate]);
 
-  const expenseCategoryLabels = useMemo(() => ({
-    ...defaultExpenseCategoryLabels,
-    ...customExpenseCategories,
-  }), [customExpenseCategories]);
+  // Build category labels from custom lists (DB) + in-memory custom + hardcoded defaults
+  const expenseCategoryLabels = useMemo(() => {
+    const fromDb: Record<string, string> = {};
+    getItemsByType('expense_category').forEach(item => {
+      fromDb[item.value] = item.label;
+    });
+    return {
+      ...defaultExpenseCategoryLabels,
+      ...fromDb,
+      ...customExpenseCategories,
+    };
+  }, [getItemsByType, customExpenseCategories]);
 
-  const incomeCategoryLabels = useMemo(() => ({
-    ...defaultIncomeCategoryLabels,
-    ...customIncomeCategories,
-  }), [customIncomeCategories]);
+  const incomeCategoryLabels = useMemo(() => {
+    const fromDb: Record<string, string> = {};
+    getItemsByType('income_category').forEach(item => {
+      fromDb[item.value] = item.label;
+    });
+    return {
+      ...defaultIncomeCategoryLabels,
+      ...fromDb,
+      ...customIncomeCategories,
+    };
+  }, [getItemsByType, customIncomeCategories]);
+
+  // Build payment methods from custom lists
+  const paymentMethods = useMemo(() => {
+    const dbMethods = getItemsByType('payment_method');
+    if (dbMethods.length > 0) {
+      return dbMethods.map(item => item.value);
+    }
+    return ['Cartão', 'PIX', 'TED', 'Cash'];
+  }, [getItemsByType]);
 
   const addExpenseCategory = (key: string, label: string) => {
     setCustomExpenseCategories(prev => ({ ...prev, [key]: label }));
@@ -671,5 +697,6 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     splitCalculation,
     uniquePeople,
     personSummaries,
+    paymentMethods,
   };
 }

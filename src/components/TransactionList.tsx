@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels, PAYMENT_METHODS } from '@/types/finance';
+import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels } from '@/types/finance';
 import { cn } from '@/lib/utils';
 import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil, Tag as TagIcon, CreditCard, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ interface TransactionListProps {
   onUpdate: (transaction: Transaction) => void;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
+  paymentMethods?: string[];
 }
 
 export function TransactionList({ 
@@ -36,6 +37,7 @@ export function TransactionList({
   onUpdate,
   expenseCategoryLabels,
   incomeCategoryLabels,
+  paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: TransactionListProps) {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -180,7 +182,7 @@ export function TransactionList({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas formas</SelectItem>
-                {PAYMENT_METHODS.map(method => (
+                {paymentMethods.map(method => (
                   <SelectItem key={method} value={method}>{method}</SelectItem>
                 ))}
               </SelectContent>
@@ -296,6 +298,7 @@ export function TransactionList({
         onSave={handleSave}
         expenseCategoryLabels={expenseCategoryLabels}
         incomeCategoryLabels={incomeCategoryLabels}
+        paymentMethods={paymentMethods}
       />
 
       <AlertDialog open={!!transactionToDelete} onOpenChange={(open) => !open && setTransactionToDelete(null)}>

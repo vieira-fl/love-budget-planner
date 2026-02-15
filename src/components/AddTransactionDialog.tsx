@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, PaymentMethod, PAYMENT_METHODS, normalizeCategoryKey } from '@/types/finance';
+import { Transaction, TransactionType, ExpenseCategory, IncomeCategory, RecurrenceType, PaymentMethod, normalizeCategoryKey } from '@/types/finance';
 import { Plus, PlusCircle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { parseLocalDate } from '@/lib/date';
@@ -20,6 +20,7 @@ interface AddTransactionDialogProps {
   incomeCategoryLabels: Record<string, string>;
   onAddExpenseCategory: (key: string, label: string) => void;
   onAddIncomeCategory: (key: string, label: string) => void;
+  paymentMethods?: string[];
 }
 
 const monthLabels = [
@@ -45,6 +46,7 @@ export function AddTransactionDialog({
   incomeCategoryLabels,
   onAddExpenseCategory,
   onAddIncomeCategory,
+  paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: AddTransactionDialogProps) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<TransactionType>('expense');
@@ -321,7 +323,7 @@ export function AddTransactionDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PAYMENT_METHODS.map((method) => (
+                  {paymentMethods.map((method) => (
                     <SelectItem key={method} value={method}>
                       {method}
                     </SelectItem>
