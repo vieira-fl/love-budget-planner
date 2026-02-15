@@ -6,7 +6,7 @@ import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
 import { TransactionList } from '@/components/TransactionList';
 import { AddTransactionDialog } from '@/components/AddTransactionDialog';
 import { PaymentMethodChart } from '@/components/PaymentMethodChart';
-import { Top10Expenses } from '@/components/Top10Expenses';
+
 import { MonthlyComparisonTab } from '@/components/MonthlyComparisonTab';
 import { PeriodFilter } from '@/components/PeriodFilter';
 import { CumulativeChart } from '@/components/CumulativeChart';
@@ -306,14 +306,6 @@ const Index = () => {
                         <CategoryAnalysisTable analysisData={categoryAnalysis} />
                       </div>
                     </div>
-                  </section>
-
-                  {/* Top 10 Expenses */}
-                  <section>
-                    <Top10Expenses
-                      expenses={top10Expenses}
-                      expenseCategoryLabels={expenseCategoryLabels}
-                    />
                   </section>
 
                   {/* Transactions */}
