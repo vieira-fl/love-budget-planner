@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter, addQuarters } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -49,12 +49,6 @@ const years = Array.from({ length: 5 }, (_, i) => ({
   label: String(currentYear - i),
 }));
 
-const quarters = [
-  { value: 'Q1', label: '1º Trimestre (Jan-Mar)' },
-  { value: 'Q2', label: '2º Trimestre (Abr-Jun)' },
-  { value: 'Q3', label: '3º Trimestre (Jul-Set)' },
-  { value: 'Q4', label: '4º Trimestre (Out-Dez)' },
-];
 
 export function PeriodFilter({
   startDate,
@@ -65,7 +59,7 @@ export function PeriodFilter({
 }: PeriodFilterProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('');
-  const [selectedQuarter, setSelectedQuarter] = useState<string>('');
+  
 
   const handleMonthYearSelect = () => {
     if (selectedYear) {
@@ -85,27 +79,12 @@ export function PeriodFilter({
         onStartDateChange(start);
         onEndDateChange(end);
       }
-      setSelectedQuarter('');
-    }
-  };
-
-  const handleQuarterSelect = () => {
-    if (selectedQuarter && selectedYear) {
-      const year = parseInt(selectedYear);
-      const quarterNum = parseInt(selectedQuarter.replace('Q', '')) - 1;
-      const baseDate = new Date(year, quarterNum * 3);
-      const start = startOfQuarter(baseDate);
-      const end = endOfQuarter(baseDate);
-      onStartDateChange(start);
-      onEndDateChange(end);
-      setSelectedMonth('');
     }
   };
 
   const handleClear = () => {
     setSelectedMonth('');
     setSelectedYear('');
-    setSelectedQuarter('');
     onClearFilter();
   };
 
@@ -133,12 +112,12 @@ export function PeriodFilter({
       </div>
 
       {/* All Filters in Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Month/Year Select */}
         <div className="space-y-2">
           <span className="text-xs text-muted-foreground font-medium">Mês e Ano</span>
           <div className="flex gap-2">
-            <Select value={selectedYear} onValueChange={(val) => { setSelectedYear(val); setSelectedQuarter(''); }}>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="flex-1 min-w-0">
                 <SelectValue placeholder="Ano" />
               </SelectTrigger>
@@ -151,7 +130,7 @@ export function PeriodFilter({
               </SelectContent>
             </Select>
 
-            <Select value={selectedMonth} onValueChange={(val) => { setSelectedMonth(val); setSelectedQuarter(''); }}>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="flex-1 min-w-0">
                 <SelectValue placeholder="Mês" />
               </SelectTrigger>
@@ -169,36 +148,6 @@ export function PeriodFilter({
               size="icon"
               onClick={handleMonthYearSelect}
               disabled={!selectedYear}
-              className="h-10 w-10 shrink-0"
-              title="Aplicar"
-            >
-              ✓
-            </Button>
-          </div>
-        </div>
-
-        {/* Quarterly Select */}
-        <div className="space-y-2">
-          <span className="text-xs text-muted-foreground font-medium">Trimestre</span>
-          <div className="flex gap-2">
-            <Select value={selectedQuarter} onValueChange={(val) => { setSelectedQuarter(val); setSelectedMonth(''); }}>
-              <SelectTrigger className="flex-1 min-w-0">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {quarters.map((quarter) => (
-                  <SelectItem key={quarter.value} value={quarter.value}>
-                    {quarter.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={handleQuarterSelect}
-              disabled={!selectedQuarter || !selectedYear}
               className="h-10 w-10 shrink-0"
               title="Aplicar"
             >
