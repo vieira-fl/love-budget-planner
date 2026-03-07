@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels } from '@/types/finance';
+import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels, defaultInvestmentCategoryLabels } from '@/types/finance';
 import { cn } from '@/lib/utils';
 import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil, Tag as TagIcon, CreditCard, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
