@@ -417,6 +417,15 @@ const Index = () => {
                     </section>
                   )}
                 </TabsContent>
+
+                <TabsContent value="investments" className="space-y-6">
+                  <InvestmentsTab
+                    transactions={transactions}
+                    investmentCategoryLabels={investmentCategoryLabels}
+                    totalInvestments={totalInvestments}
+                    uniquePeople={uniquePeople}
+                  />
+                </TabsContent>
               </Tabs>
             )}
           </>
