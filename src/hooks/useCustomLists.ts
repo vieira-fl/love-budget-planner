@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-export type ListType = 'expense_category' | 'income_category' | 'payment_method' | 'tag';
+export type ListType = 'expense_category' | 'income_category' | 'investment_category' | 'payment_method' | 'tag';
 
 export interface ListItem {
   id: string;
