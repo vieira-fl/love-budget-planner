@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { useState, useEffect, useCallback } from 'react';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,13 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 
 interface PeriodFilterProps {
@@ -27,28 +20,13 @@ interface PeriodFilterProps {
   onClearFilter: () => void;
 }
 
-const months = [
-  { value: 'none', label: 'Todos os meses' },
-  { value: '0', label: 'Janeiro' },
-  { value: '1', label: 'Fevereiro' },
-  { value: '2', label: 'Março' },
-  { value: '3', label: 'Abril' },
-  { value: '4', label: 'Maio' },
-  { value: '5', label: 'Junho' },
-  { value: '6', label: 'Julho' },
-  { value: '7', label: 'Agosto' },
-  { value: '8', label: 'Setembro' },
-  { value: '9', label: 'Outubro' },
-  { value: '10', label: 'Novembro' },
-  { value: '11', label: 'Dezembro' },
+const monthLabels = [
+  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+  'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
 ];
 
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 5 }, (_, i) => ({
-  value: String(currentYear - i),
-  label: String(currentYear - i),
-}));
-
+const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
 export function PeriodFilter({
   startDate,
@@ -57,34 +35,53 @@ export function PeriodFilter({
   onEndDateChange,
   onClearFilter,
 }: PeriodFilterProps) {
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
-  const [selectedYear, setSelectedYear] = useState<string>('');
-  
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
 
-  const handleMonthYearSelect = () => {
-    if (selectedYear) {
-      const year = parseInt(selectedYear);
-      
-      if (selectedMonth && selectedMonth !== 'none') {
-        // Specific month selected
-        const month = parseInt(selectedMonth);
-        const start = startOfMonth(new Date(year, month));
-        const end = endOfMonth(new Date(year, month));
-        onStartDateChange(start);
-        onEndDateChange(end);
-      } else {
-        // Only year selected (all months)
-        const start = startOfYear(new Date(year, 0));
-        const end = endOfYear(new Date(year, 0));
-        onStartDateChange(start);
-        onEndDateChange(end);
-      }
+  const applyFilter = useCallback((year: number | null, months: number[]) => {
+    if (!year) {
+      onClearFilter();
+      return;
+    }
+
+    if (months.length === 0) {
+      // Year only
+      onStartDateChange(startOfYear(new Date(year, 0)));
+      onEndDateChange(endOfYear(new Date(year, 0)));
+    } else {
+      // Specific months — find min/max to create range
+      const sortedMonths = [...months].sort((a, b) => a - b);
+      const start = startOfMonth(new Date(year, sortedMonths[0]));
+      const end = endOfMonth(new Date(year, sortedMonths[sortedMonths.length - 1]));
+      onStartDateChange(start);
+      onEndDateChange(end);
+    }
+  }, [onStartDateChange, onEndDateChange, onClearFilter]);
+
+  const toggleYear = (year: number) => {
+    if (selectedYear === year) {
+      setSelectedYear(null);
+      setSelectedMonths([]);
+      onClearFilter();
+    } else {
+      setSelectedYear(year);
+      setSelectedMonths([]);
+      applyFilter(year, []);
     }
   };
 
+  const toggleMonth = (month: number) => {
+    if (!selectedYear) return;
+    const newMonths = selectedMonths.includes(month)
+      ? selectedMonths.filter((m) => m !== month)
+      : [...selectedMonths, month];
+    setSelectedMonths(newMonths);
+    applyFilter(selectedYear, newMonths);
+  };
+
   const handleClear = () => {
-    setSelectedMonth('');
-    setSelectedYear('');
+    setSelectedYear(null);
+    setSelectedMonths([]);
     onClearFilter();
   };
 
@@ -111,52 +108,45 @@ export function PeriodFilter({
         )}
       </div>
 
-      {/* All Filters in Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Month/Year Select */}
+      <div className="space-y-4">
+        {/* Year Buttons */}
         <div className="space-y-2">
-          <span className="text-xs text-muted-foreground font-medium">Mês e Ano</span>
-          <div className="flex gap-2">
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="flex-1 min-w-0">
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year) => (
-                  <SelectItem key={year.value} value={year.value}>
-                    {year.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="flex-1 min-w-0">
-                <SelectValue placeholder="Mês" />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map((month) => (
-                  <SelectItem key={month.value} value={month.value}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={handleMonthYearSelect}
-              disabled={!selectedYear}
-              className="h-10 w-10 shrink-0"
-              title="Aplicar"
-            >
-              ✓
-            </Button>
+          <span className="text-xs text-muted-foreground font-medium">Ano</span>
+          <div className="flex flex-wrap gap-2">
+            {years.map((year) => (
+              <Button
+                key={year}
+                variant={selectedYear === year ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleYear(year)}
+                className="h-8 px-3 text-xs"
+              >
+                {year}
+              </Button>
+            ))}
           </div>
         </div>
 
-        {/* Date Range Picker */}
+        {/* Month Buttons */}
+        <div className="space-y-2">
+          <span className="text-xs text-muted-foreground font-medium">Mês</span>
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+            {monthLabels.map((label, index) => (
+              <Button
+                key={index}
+                variant={selectedMonths.includes(index) ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleMonth(index)}
+                disabled={!selectedYear}
+                className="h-8 px-2 text-xs"
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Date Range */}
         <div className="space-y-2">
           <span className="text-xs text-muted-foreground font-medium">Período Personalizado</span>
           <div className="flex gap-2 items-center">
@@ -166,7 +156,7 @@ export function PeriodFilter({
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "flex-1 min-w-0 justify-start text-left font-normal h-10",
+                    "flex-1 min-w-0 justify-start text-left font-normal h-9",
                     !startDate && "text-muted-foreground"
                   )}
                 >
@@ -180,7 +170,11 @@ export function PeriodFilter({
                 <Calendar
                   mode="single"
                   selected={startDate}
-                  onSelect={onStartDateChange}
+                  onSelect={(date) => {
+                    setSelectedYear(null);
+                    setSelectedMonths([]);
+                    onStartDateChange(date);
+                  }}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                   locale={ptBR}
@@ -196,7 +190,7 @@ export function PeriodFilter({
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "flex-1 min-w-0 justify-start text-left font-normal h-10",
+                    "flex-1 min-w-0 justify-start text-left font-normal h-9",
                     !endDate && "text-muted-foreground"
                   )}
                 >
@@ -210,7 +204,11 @@ export function PeriodFilter({
                 <Calendar
                   mode="single"
                   selected={endDate}
-                  onSelect={onEndDateChange}
+                  onSelect={(date) => {
+                    setSelectedYear(null);
+                    setSelectedMonths([]);
+                    onEndDateChange(date);
+                  }}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                   locale={ptBR}
