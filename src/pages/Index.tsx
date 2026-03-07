@@ -307,10 +307,11 @@ const Index = () => {
             {/* Tabs - only show if there are transactions */}
             {transactions.length > 0 && (
               <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3 max-w-lg">
+                <TabsList className="grid w-full grid-cols-4 max-w-xl">
                   <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                   <TabsTrigger value="comparison">Comparativo</TabsTrigger>
                   <TabsTrigger value="split">Rateio</TabsTrigger>
+                  <TabsTrigger value="investments">Investimentos</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
