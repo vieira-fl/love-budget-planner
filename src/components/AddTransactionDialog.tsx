@@ -217,6 +217,22 @@ export function AddTransactionDialog({
             >
               Despesa
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setType('investment');
+                setCategory('acoes');
+                setTag('');
+              }}
+              className={cn(
+                'flex-1 py-2 rounded-md text-sm font-medium transition-all',
+                type === 'investment'
+                  ? 'bg-investment text-investment-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Investimento
+            </button>
           </div>
 
           <div className="space-y-2">
