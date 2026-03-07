@@ -12,6 +12,7 @@ import {
   defaultThreshold,
   defaultExpenseCategoryLabels,
   defaultIncomeCategoryLabels,
+  defaultInvestmentCategoryLabels,
   normalizeCategoryKey,
   MonthlyComparison,
   CategoryChange,
