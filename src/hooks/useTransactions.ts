@@ -77,6 +77,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
   const [loading, setLoading] = useState(true);
   const [customExpenseCategories, setCustomExpenseCategories] = useState<Record<string, string>>({});
   const [customIncomeCategories, setCustomIncomeCategories] = useState<Record<string, string>>({});
+  const [customInvestmentCategories, setCustomInvestmentCategories] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
   const { getItemsByType, initialized, seedDefaults, loading: listsLoading } = useCustomLists();
