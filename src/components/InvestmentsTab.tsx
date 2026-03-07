@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Transaction } from '@/types/finance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart as LineChartIcon, TrendingUp, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
+import { LineChart as LineChartIcon, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
