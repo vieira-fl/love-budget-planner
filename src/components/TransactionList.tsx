@@ -103,6 +103,9 @@ export function TransactionList({
     if (transaction.type === 'income') {
       return (incomeCategoryLabels?.[transaction.category]) || defaultIncomeCategoryLabels[transaction.category] || transaction.category;
     }
+    if (transaction.type === 'investment') {
+      return (investmentCategoryLabels?.[transaction.category]) || defaultInvestmentCategoryLabels[transaction.category] || transaction.category;
+    }
     return (expenseCategoryLabels?.[transaction.category]) || defaultExpenseCategoryLabels[transaction.category] || transaction.category;
   };
 
