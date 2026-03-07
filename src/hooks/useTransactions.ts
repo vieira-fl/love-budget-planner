@@ -206,6 +206,10 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     setCustomIncomeCategories(prev => ({ ...prev, [key]: label }));
   };
 
+  const addInvestmentCategory = (key: string, label: string) => {
+    setCustomInvestmentCategories(prev => ({ ...prev, [key]: label }));
+  };
+
   const totalIncome = useMemo(() => {
     return filteredTransactions
       .filter(t => t.type === 'income')
