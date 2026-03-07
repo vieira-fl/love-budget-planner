@@ -224,6 +224,12 @@ export function useTransactions(periodFilter?: PeriodFilter) {
 
   const balance = useMemo(() => totalIncome - totalExpenses, [totalIncome, totalExpenses]);
 
+  const totalInvestments = useMemo(() => {
+    return filteredTransactions
+      .filter(t => t.type === 'investment')
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [filteredTransactions]);
+
   const categoryAnalysis = useMemo((): CategoryAnalysis[] => {
     const expensesByCategory = filteredTransactions
       .filter(t => t.type === 'expense')
