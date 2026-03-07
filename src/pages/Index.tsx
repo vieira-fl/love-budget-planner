@@ -337,6 +337,7 @@ const Index = () => {
                       onUpdate={updateTransaction}
                       expenseCategoryLabels={expenseCategoryLabels}
                       incomeCategoryLabels={incomeCategoryLabels}
+                      investmentCategoryLabels={investmentCategoryLabels}
                       paymentMethods={paymentMethods}
                     />
                   </section>
