@@ -156,6 +156,41 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
 
   return (
     <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="bg-card card-shadow">
+          <CardContent className="pt-5 pb-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Saldo Operacional</p>
+            <p className={`text-2xl font-bold mt-1 ${totalBalance >= 0 ? 'text-income' : 'text-expense'}`}>
+              {formatCurrency(totalBalance)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Receitas − Despesas do período</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card card-shadow">
+          <CardContent className="pt-5 pb-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Investido</p>
+            <p className="text-2xl font-bold mt-1 text-investment">
+              {formatCurrency(totalInvestments)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {investmentPct.toFixed(1)}% do saldo operacional
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card card-shadow">
+          <CardContent className="pt-5 pb-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Caixa Livre Total</p>
+            <p className={`text-2xl font-bold mt-1 ${totalFreeCash >= 0 ? 'text-income' : 'text-expense'}`}>
+              {formatCurrency(totalFreeCash)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {freeCashPct.toFixed(1)}% do saldo operacional
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Monthly Evolution */}
       {monthlyEvolution.length > 0 && (
         <Card className="bg-card card-shadow">
