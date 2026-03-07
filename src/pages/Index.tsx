@@ -13,6 +13,7 @@ import { CumulativeChart } from '@/components/CumulativeChart';
 import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
 import { SplitCategoryBreakdown } from '@/components/SplitCategoryBreakdown';
 import { DetailedSplitCard } from '@/components/DetailedSplitCard';
+import { InvestmentsTab } from '@/components/InvestmentsTab';
 import { PersonSummaryCard } from '@/components/PersonSummaryCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImportExpensesDialog } from '@/components/ImportExpensesDialog';
