@@ -139,8 +139,10 @@ export function AddTransactionDialog({
     
     if (type === 'expense') {
       onAddExpenseCategory(key, newCategoryName);
-    } else {
+    } else if (type === 'income') {
       onAddIncomeCategory(key, newCategoryName);
+    } else {
+      onAddInvestmentCategory(key, newCategoryName);
     }
     
     setCategory(key);
