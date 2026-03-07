@@ -18,8 +18,10 @@ interface AddTransactionDialogProps {
   username: string;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
+  investmentCategoryLabels: Record<string, string>;
   onAddExpenseCategory: (key: string, label: string) => void;
   onAddIncomeCategory: (key: string, label: string) => void;
+  onAddInvestmentCategory: (key: string, label: string) => void;
   paymentMethods?: string[];
 }
 
