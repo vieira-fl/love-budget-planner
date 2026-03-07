@@ -69,7 +69,7 @@ export function EditTransactionDialog({
       amount: parseFloat(amount),
       date: parseLocalDate(date),
       recurrence,
-      includeInSplit,
+      includeInSplit: type === 'investment' ? false : includeInSplit,
       paymentMethod: type === 'expense' ? paymentMethod : undefined,
     });
 
