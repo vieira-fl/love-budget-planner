@@ -37,12 +37,11 @@ export function CumulativeChart({ transactions }: CumulativeChartProps) {
       
       if (t.type === 'income') {
         existing.income += t.amount;
-      } else {
+      } else if (t.type === 'expense') {
         existing.expenses += t.amount;
       }
       
       byDate.set(dateKey, existing);
-    });
 
     // Sort dates and calculate cumulative values
     const sortedDates = Array.from(byDate.entries()).sort((a, b) => a[0].localeCompare(b[0]));
