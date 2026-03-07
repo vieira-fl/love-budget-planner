@@ -188,8 +188,10 @@ const Index = () => {
                   username={profile?.username || 'Usuário'}
                   expenseCategoryLabels={expenseCategoryLabels}
                   incomeCategoryLabels={incomeCategoryLabels}
+                  investmentCategoryLabels={investmentCategoryLabels}
                   onAddExpenseCategory={addExpenseCategory}
                   onAddIncomeCategory={addIncomeCategory}
+                  onAddInvestmentCategory={addInvestmentCategory}
                   paymentMethods={paymentMethods}
                 />
                 <Button
