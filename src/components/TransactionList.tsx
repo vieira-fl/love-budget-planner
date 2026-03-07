@@ -257,6 +257,16 @@ export function TransactionList({
                         {transaction.tag}
                       </span>
                     )}
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className={cn(
+                      'flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
+                      transaction.includeInSplit
+                        ? 'text-primary bg-primary/10'
+                        : 'text-muted-foreground bg-muted'
+                    )}>
+                      <Split className="h-3 w-3" />
+                      {transaction.includeInSplit ? 'No rateio' : 'Fora do rateio'}
+                    </span>
                   </div>
                 </div>
               </div>
