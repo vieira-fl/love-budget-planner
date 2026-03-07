@@ -35,8 +35,30 @@ export function PeriodFilter({
   onEndDateChange,
   onClearFilter,
 }: PeriodFilterProps) {
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+  // Default: current year, months from January to last closed month
+  const getDefaultYear = () => new Date().getFullYear();
+  const getDefaultMonths = () => {
+    const now = new Date();
+    const lastClosedMonth = now.getMonth() - 1; // 0-indexed, previous month
+    if (lastClosedMonth < 0) return []; // January: no closed month yet this year
+    return Array.from({ length: lastClosedMonth + 1 }, (_, i) => i);
+  };
+
+  const [selectedYear, setSelectedYear] = useState<number | null>(getDefaultYear);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>(getDefaultMonths);
+
+  // Apply default filter on mount
+  useEffect(() => {
+    const year = getDefaultYear();
+    const months = getDefaultMonths();
+    if (months.length > 0) {
+      applyFilter(year, months);
+    } else {
+      // If no closed month yet (January), filter whole year
+      applyFilter(year, []);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const applyFilter = useCallback((year: number | null, months: number[]) => {
     if (!year) {
