@@ -168,6 +168,7 @@ export function AddTransactionDialog({
 
   const expenseCategories = Object.entries(expenseCategoryLabels);
   const incomeCategories = Object.entries(incomeCategoryLabels);
+  const investmentCategories = Object.entries(investmentCategoryLabels);
 
   const currentYear = new Date().getFullYear();
   const years = [currentYear - 1, currentYear, currentYear + 1];
