@@ -87,9 +87,8 @@ export function AddTransactionDialog({
       person: username,
       date: parsedDate,
       recurrence,
-      includeInSplit,
-      paymentMethod: type === 'expense' ? paymentMethod : undefined,
       includeInSplit: type === 'investment' ? false : includeInSplit,
+      paymentMethod: type === 'expense' ? paymentMethod : undefined,
     };
 
     if (enableMultiMonth && selectedMonths.length > 0 && onAddMultiple) {
