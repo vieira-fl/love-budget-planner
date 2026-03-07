@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import { Transaction } from '@/types/finance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart as LineChartIcon, TrendingUp, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
+import { LineChart as LineChartIcon, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -55,23 +54,20 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
       .sort((a, b) => b.value - a.value);
   }, [investmentTransactions]);
 
-  const monthlyEvolution = useMemo(() => {
-    const map = new Map<string, number>();
-    investmentTransactions.forEach(t => {
-      const key = format(new Date(t.date), 'yyyy-MM');
-      map.set(key, (map.get(key) || 0) + t.amount);
+  const perPersonSummary = useMemo(() => {
+    const map: Record<string, { income: number; expenses: number; investments: number }> = {};
+    transactions.forEach(t => {
+      if (!map[t.person]) map[t.person] = { income: 0, expenses: 0, investments: 0 };
+      if (t.type === 'income') map[t.person].income += t.amount;
+      else if (t.type === 'expense') map[t.person].expenses += t.amount;
+      else if (t.type === 'investment') map[t.person].investments += t.amount;
     });
-    return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([key, value]) => {
-        const [year, month] = key.split('-').map(Number);
-        return {
-          monthKey: key,
-          month: format(new Date(year, month - 1, 15), 'MMM/yy', { locale: ptBR }),
-          value,
-        };
-      });
-  }, [investmentTransactions]);
+    return Object.entries(map).map(([name, data]) => {
+      const balance = data.income - data.expenses;
+      const freeCash = balance - data.investments;
+      return { name, ...data, balance, freeCash };
+    }).sort((a, b) => b.balance - a.balance);
+  }, [transactions]);
 
   // Monthly balance (income - expenses) per month, then compare with investments
   const monthlyBalanceVsInvestment = useMemo(() => {
@@ -191,44 +187,36 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
         </Card>
       </div>
 
-      {/* Monthly Evolution */}
-      {monthlyEvolution.length > 0 && (
-        <Card className="bg-card card-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-investment" />
-              Evolução Mensal dos Investimentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyEvolution} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickFormatter={(v: number) => Math.abs(v) >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                    formatter={(value: number) => [formatCurrency(value), 'Investido']}
-                  />
-                  <Bar dataKey="value" fill="hsl(var(--investment))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Per-Person Summary */}
+      {perPersonSummary.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {perPersonSummary.map(p => (
+            <Card key={p.name} className="bg-card card-shadow">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">{p.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Saldo Operacional</span>
+                  <span className={`font-semibold ${p.balance >= 0 ? 'text-income' : 'text-expense'}`}>
+                    {formatCurrency(p.balance)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Investido</span>
+                  <span className="font-semibold text-investment">{formatCurrency(p.investments)}</span>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-muted-foreground">Caixa Livre</span>
+                  <span className={`font-bold text-lg ${p.freeCash >= 0 ? 'text-income' : 'text-expense'}`}>
+                    {formatCurrency(p.freeCash)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* Balance vs Investment Analysis */}
