@@ -344,7 +344,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
       const monthData = monthsMap.get(monthKey)!;
       if (transaction.type === 'income') {
         monthData.income += transaction.amount;
-      } else {
+      } else if (transaction.type === 'expense') {
         monthData.expenses += transaction.amount;
       }
     });
