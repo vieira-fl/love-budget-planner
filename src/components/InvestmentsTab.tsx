@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { Transaction } from '@/types/finance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart as LineChartIcon, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
-import {
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
-} from 'recharts';
+import { LineChartIcon, Wallet, AlertTriangle, CheckCircle, Target } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useInvestmentGoals } from '@/hooks/useInvestmentGoals';
 
 interface InvestmentsTabProps {
   transactions: Transaction[];
@@ -29,18 +29,21 @@ const COLORS = [
 ];
 
 export function InvestmentsTab({ transactions, investmentCategoryLabels, totalInvestments, uniquePeople }: InvestmentsTabProps) {
+  const { getGoal, upsertGoal } = useInvestmentGoals();
+
   const investmentTransactions = useMemo(() =>
     transactions.filter(t => t.type === 'investment').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
   [transactions]);
 
   const byCategory = useMemo(() => {
-    const map: Record<string, number> = {};
+    const map: Record<string, { key: string; value: number }> = {};
     investmentTransactions.forEach(t => {
       const label = investmentCategoryLabels[t.category] || t.category;
-      map[label] = (map[label] || 0) + t.amount;
+      if (!map[label]) map[label] = { key: t.category, value: 0 };
+      map[label].value += t.amount;
     });
     return Object.entries(map)
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, { key, value }]) => ({ name, key, value }))
       .sort((a, b) => b.value - a.value);
   }, [investmentTransactions, investmentCategoryLabels]);
 
@@ -69,9 +72,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
     }).sort((a, b) => b.balance - a.balance);
   }, [transactions]);
 
-  // Monthly balance (income - expenses) per month, then compare with investments
   const monthlyBalanceVsInvestment = useMemo(() => {
-    // Calculate monthly balance (income - expense only, no investments)
     const balanceMap = new Map<string, { income: number; expenses: number }>();
     transactions.forEach(t => {
       if (t.type === 'investment') return;
@@ -82,14 +83,12 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
       balanceMap.set(key, existing);
     });
 
-    // Calculate monthly investments
     const investMap = new Map<string, number>();
     investmentTransactions.forEach(t => {
       const key = format(new Date(t.date), 'yyyy-MM');
       investMap.set(key, (investMap.get(key) || 0) + t.amount);
     });
 
-    // Merge all month keys
     const allKeys = new Set([...balanceMap.keys(), ...investMap.keys()]);
     return Array.from(allKeys)
       .sort()
@@ -104,7 +103,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
           month: format(new Date(year, month - 1, 15), 'MMM/yy', { locale: ptBR }),
           balance: monthBalance,
           investment: monthInvestment,
-          difference, // positive = caixa livre, negative = precisará economizar
+          difference,
         };
       });
   }, [transactions, investmentTransactions]);
@@ -115,7 +114,6 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
   const formatCurrencyFull = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
-  // Summary calculations
   const totalBalance = useMemo(() => {
     let income = 0, expenses = 0;
     transactions.forEach(t => {
@@ -184,6 +182,73 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
           </CardContent>
         </Card>
       </div>
+
+      {/* By Category with Goals - moved right after summary */}
+      <Card className="bg-card card-shadow">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Target className="h-5 w-5 text-investment" />
+            Por Categoria
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            Defina metas para cada categoria de investimento e acompanhe o progresso.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead className="text-right">Investido</TableHead>
+                  <TableHead className="text-right">% do Total</TableHead>
+                  <TableHead className="text-right w-[140px]">Meta (R$)</TableHead>
+                  <TableHead className="text-right">Completude</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {byCategory.map((cat, i) => {
+                  const pct = totalInvestments > 0 ? (cat.value / totalInvestments) * 100 : 0;
+                  const goal = getGoal(cat.key);
+                  const completionPct = goal > 0 ? Math.min((cat.value / goal) * 100, 100) : 0;
+
+                  return (
+                    <TableRow key={cat.name}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                          <span className="font-medium text-foreground">{cat.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-investment">
+                        {formatCurrencyFull(cat.value)}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {pct.toFixed(1)}%
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <GoalInput categoryKey={cat.key} currentGoal={goal} onSave={upsertGoal} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {goal > 0 ? (
+                          <div className="flex items-center gap-2 justify-end min-w-[120px]">
+                            <Progress value={completionPct} className="h-2 w-16" />
+                            <span className={`text-xs font-semibold whitespace-nowrap ${completionPct >= 100 ? 'text-income' : 'text-muted-foreground'}`}>
+                              {completionPct.toFixed(0)}%
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Per-Person Summary */}
       {perPersonSummary.length > 0 && (
@@ -280,106 +345,35 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* By Category */}
+      {/* By Person */}
+      {byPerson.length > 1 && (
         <Card className="bg-card card-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold text-foreground">Por Categoria</CardTitle>
+            <CardTitle className="text-lg font-semibold text-foreground">Por Pessoa</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-right">%</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {byCategory.map((cat, i) => {
-                    const pct = totalInvestments > 0 ? (cat.value / totalInvestments) * 100 : 0;
-                    return (
-                      <TableRow key={cat.name}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                            <span className="font-medium text-foreground">{cat.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-investment">
-                          {formatCurrencyFull(cat.value)}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {pct.toFixed(1)}%
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className="space-y-4 pt-4">
+              {byPerson.map((p, i) => {
+                const pct = totalInvestments > 0 ? (p.value / totalInvestments) * 100 : 0;
+                return (
+                  <div key={p.name} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium text-foreground">{p.name}</span>
+                      <span className="text-muted-foreground">{formatCurrency(p.value)} ({pct.toFixed(1)}%)</span>
+                    </div>
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
-
-        {/* By Person */}
-        {byPerson.length > 1 && (
-          <Card className="bg-card card-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-foreground">Por Pessoa</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 pt-4">
-                {byPerson.map((p, i) => {
-                  const pct = totalInvestments > 0 ? (p.value / totalInvestments) * 100 : 0;
-                  return (
-                    <div key={p.name} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium text-foreground">{p.name}</span>
-                        <span className="text-muted-foreground">{formatCurrency(p.value)} ({pct.toFixed(1)}%)</span>
-                      </div>
-                      <div className="h-3 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Detail list (when single person) */}
-        {byPerson.length <= 1 && (
-          <Card className="bg-card card-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-foreground">Detalhamento por Categoria</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-[280px] overflow-y-auto">
-                {byCategory.map((cat, i) => {
-                  const pct = totalInvestments > 0 ? (cat.value / totalInvestments) * 100 : 0;
-                  return (
-                    <div key={cat.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                        <span className="text-sm text-foreground">{cat.name}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-sm font-medium text-foreground">{formatCurrency(cat.value)}</span>
-                        <span className="text-xs text-muted-foreground ml-2">({pct.toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      )}
 
       {/* Investment Detail Table */}
       <Card className="bg-card card-shadow">
@@ -425,5 +419,63 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Inline editable goal input component
+function GoalInput({ categoryKey, currentGoal, onSave }: { categoryKey: string; currentGoal: number; onSave: (key: string, amount: number) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(currentGoal > 0 ? currentGoal.toString() : '');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setValue(currentGoal > 0 ? currentGoal.toString() : '');
+  }, [currentGoal]);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
+
+  const handleSave = () => {
+    setEditing(false);
+    const num = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.'));
+    if (!isNaN(num) && num >= 0) {
+      onSave(categoryKey, num);
+    } else if (value === '' || value === '0') {
+      onSave(categoryKey, 0);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="text-sm text-right w-full cursor-pointer hover:bg-muted/50 rounded px-2 py-1 transition-colors"
+      >
+        {currentGoal > 0 ? (
+          <span className="font-medium text-foreground">
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(currentGoal)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-xs">Definir meta</span>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <Input
+      ref={inputRef}
+      type="text"
+      value={value}
+      onChange={e => setValue(e.target.value)}
+      onBlur={handleSave}
+      onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false); }}
+      className="h-7 text-sm text-right w-[120px] ml-auto"
+      placeholder="0"
+    />
   );
 }
