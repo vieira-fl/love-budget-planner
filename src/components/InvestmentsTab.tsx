@@ -55,23 +55,20 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
       .sort((a, b) => b.value - a.value);
   }, [investmentTransactions]);
 
-  const monthlyEvolution = useMemo(() => {
-    const map = new Map<string, number>();
-    investmentTransactions.forEach(t => {
-      const key = format(new Date(t.date), 'yyyy-MM');
-      map.set(key, (map.get(key) || 0) + t.amount);
+  const perPersonSummary = useMemo(() => {
+    const map: Record<string, { income: number; expenses: number; investments: number }> = {};
+    transactions.forEach(t => {
+      if (!map[t.person]) map[t.person] = { income: 0, expenses: 0, investments: 0 };
+      if (t.type === 'income') map[t.person].income += t.amount;
+      else if (t.type === 'expense') map[t.person].expenses += t.amount;
+      else if (t.type === 'investment') map[t.person].investments += t.amount;
     });
-    return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([key, value]) => {
-        const [year, month] = key.split('-').map(Number);
-        return {
-          monthKey: key,
-          month: format(new Date(year, month - 1, 15), 'MMM/yy', { locale: ptBR }),
-          value,
-        };
-      });
-  }, [investmentTransactions]);
+    return Object.entries(map).map(([name, data]) => {
+      const balance = data.income - data.expenses;
+      const freeCash = balance - data.investments;
+      return { name, ...data, balance, freeCash };
+    }).sort((a, b) => b.balance - a.balance);
+  }, [transactions]);
 
   // Monthly balance (income - expenses) per month, then compare with investments
   const monthlyBalanceVsInvestment = useMemo(() => {
