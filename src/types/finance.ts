@@ -51,7 +51,7 @@ export const PAYMENT_METHODS: PaymentMethod[] = ['Cartão', 'PIX', 'TED', 'Cash'
 export interface Transaction {
   id: string;
   type: TransactionType;
-  category: ExpenseCategory | IncomeCategory;
+  category: ExpenseCategory | IncomeCategory | InvestmentCategory;
   description: string;
   tag?: string;
   amount: number;
