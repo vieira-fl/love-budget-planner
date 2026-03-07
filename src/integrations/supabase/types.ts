@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_goals: {
+        Row: {
+          category_key: string
+          created_at: string
+          goal_amount: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_key: string
+          created_at?: string
+          goal_amount?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_key?: string
+          created_at?: string
+          goal_amount?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       person_settings: {
         Row: {
           created_at: string
