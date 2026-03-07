@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { Transaction } from '@/types/finance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart as LineChartIcon, TrendingUp } from 'lucide-react';
+import { LineChart as LineChartIcon, TrendingUp, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -28,8 +30,8 @@ const COLORS = [
 ];
 
 export function InvestmentsTab({ transactions, investmentCategoryLabels, totalInvestments, uniquePeople }: InvestmentsTabProps) {
-  const investmentTransactions = useMemo(() => 
-    transactions.filter(t => t.type === 'investment'),
+  const investmentTransactions = useMemo(() =>
+    transactions.filter(t => t.type === 'investment').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
   [transactions]);
 
   const byCategory = useMemo(() => {
@@ -64,14 +66,58 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
       .map(([key, value]) => {
         const [year, month] = key.split('-').map(Number);
         return {
+          monthKey: key,
           month: format(new Date(year, month - 1, 15), 'MMM/yy', { locale: ptBR }),
           value,
         };
       });
   }, [investmentTransactions]);
 
+  // Monthly balance (income - expenses) per month, then compare with investments
+  const monthlyBalanceVsInvestment = useMemo(() => {
+    // Calculate monthly balance (income - expense only, no investments)
+    const balanceMap = new Map<string, { income: number; expenses: number }>();
+    transactions.forEach(t => {
+      if (t.type === 'investment') return;
+      const key = format(new Date(t.date), 'yyyy-MM');
+      const existing = balanceMap.get(key) || { income: 0, expenses: 0 };
+      if (t.type === 'income') existing.income += t.amount;
+      else if (t.type === 'expense') existing.expenses += t.amount;
+      balanceMap.set(key, existing);
+    });
+
+    // Calculate monthly investments
+    const investMap = new Map<string, number>();
+    investmentTransactions.forEach(t => {
+      const key = format(new Date(t.date), 'yyyy-MM');
+      investMap.set(key, (investMap.get(key) || 0) + t.amount);
+    });
+
+    // Merge all month keys
+    const allKeys = new Set([...balanceMap.keys(), ...investMap.keys()]);
+    return Array.from(allKeys)
+      .sort()
+      .map(key => {
+        const bal = balanceMap.get(key) || { income: 0, expenses: 0 };
+        const monthBalance = bal.income - bal.expenses;
+        const monthInvestment = investMap.get(key) || 0;
+        const difference = monthBalance - monthInvestment;
+        const [year, month] = key.split('-').map(Number);
+        return {
+          monthKey: key,
+          month: format(new Date(year, month - 1, 15), 'MMM/yy', { locale: ptBR }),
+          balance: monthBalance,
+          investment: monthInvestment,
+          difference, // positive = caixa livre, negative = precisará economizar
+        };
+      });
+  }, [transactions, investmentTransactions]);
+
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+
+  const formatCurrencyFull = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
   if (investmentTransactions.length === 0) {
     return (
@@ -126,6 +172,69 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
                   <Bar dataKey="value" fill="hsl(var(--investment))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Balance vs Investment Analysis */}
+      {monthlyBalanceVsInvestment.length > 0 && (
+        <Card className="bg-card card-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              Saldo Mensal vs Investimentos
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Compara o saldo operacional (receitas − despesas) com os investimentos realizados em cada mês.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Mês</TableHead>
+                    <TableHead className="text-right">Saldo Operacional</TableHead>
+                    <TableHead className="text-right">Investimento</TableHead>
+                    <TableHead className="text-right">Resultado</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {monthlyBalanceVsInvestment.map(row => (
+                    <TableRow key={row.monthKey}>
+                      <TableCell className="font-medium capitalize">{row.month}</TableCell>
+                      <TableCell className={`text-right ${row.balance >= 0 ? 'text-income' : 'text-expense'}`}>
+                        {formatCurrencyFull(row.balance)}
+                      </TableCell>
+                      <TableCell className="text-right text-investment">
+                        {formatCurrencyFull(row.investment)}
+                      </TableCell>
+                      <TableCell className={`text-right font-semibold ${row.difference >= 0 ? 'text-income' : 'text-expense'}`}>
+                        {formatCurrencyFull(row.difference)}
+                      </TableCell>
+                      <TableCell>
+                        {row.investment === 0 ? (
+                          <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30">
+                            Sem investimento
+                          </Badge>
+                        ) : row.difference >= 0 ? (
+                          <Badge className="bg-income/15 text-income border-income/30 hover:bg-income/20 gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Caixa livre: {formatCurrency(row.difference)}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-warning/15 text-warning border-warning/30 hover:bg-warning/20 gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Economizar: {formatCurrency(Math.abs(row.difference))}
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
@@ -193,11 +302,11 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
           </Card>
         )}
 
-        {/* Detail list */}
+        {/* Detail list (when single person) */}
         {byPerson.length <= 1 && (
           <Card className="bg-card card-shadow">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-foreground">Detalhamento</CardTitle>
+              <CardTitle className="text-lg font-semibold text-foreground">Detalhamento por Categoria</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-[280px] overflow-y-auto">
@@ -221,6 +330,50 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
           </Card>
         )}
       </div>
+
+      {/* Investment Detail Table */}
+      <Card className="bg-card card-shadow">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <LineChartIcon className="h-5 w-5 text-investment" />
+            Detalhamento dos Investimentos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Pessoa</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {investmentTransactions.map(t => (
+                  <TableRow key={t.id}>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(t.date), 'dd/MM/yyyy')}
+                    </TableCell>
+                    <TableCell className="font-medium text-foreground">{t.description}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-investment border-investment/30">
+                        {investmentCategoryLabels[t.category] || t.category}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{t.person}</TableCell>
+                    <TableCell className="text-right font-semibold text-investment">
+                      {formatCurrencyFull(t.amount)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
