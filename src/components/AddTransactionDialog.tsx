@@ -89,6 +89,7 @@ export function AddTransactionDialog({
       recurrence,
       includeInSplit,
       paymentMethod: type === 'expense' ? paymentMethod : undefined,
+      includeInSplit: type === 'investment' ? false : includeInSplit,
     };
 
     if (enableMultiMonth && selectedMonths.length > 0 && onAddMultiple) {
