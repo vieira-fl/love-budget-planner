@@ -265,7 +265,7 @@ export function TransactionList({
                   <p
                     className={cn(
                       'font-semibold',
-                      transaction.type === 'income' ? 'text-income' : 'text-expense'
+                      transaction.type === 'income' ? 'text-income' : transaction.type === 'investment' ? 'text-investment' : 'text-expense'
                     )}
                   >
                     {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
