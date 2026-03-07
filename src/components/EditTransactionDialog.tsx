@@ -78,6 +78,7 @@ export function EditTransactionDialog({
 
   const expenseCategories = Object.entries(expenseCategoryLabels);
   const incomeCategories = Object.entries(incomeCategoryLabels);
+  const investmentCategories = Object.entries(investmentCategoryLabels);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
