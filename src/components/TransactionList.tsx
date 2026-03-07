@@ -303,6 +303,7 @@ export function TransactionList({
         onSave={handleSave}
         expenseCategoryLabels={expenseCategoryLabels}
         incomeCategoryLabels={incomeCategoryLabels}
+        investmentCategoryLabels={investmentCategoryLabels}
         paymentMethods={paymentMethods}
       />
 
