@@ -188,44 +188,36 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
         </Card>
       </div>
 
-      {/* Monthly Evolution */}
-      {monthlyEvolution.length > 0 && (
-        <Card className="bg-card card-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-investment" />
-              Evolução Mensal dos Investimentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyEvolution} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickFormatter={(v: number) => Math.abs(v) >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                    formatter={(value: number) => [formatCurrency(value), 'Investido']}
-                  />
-                  <Bar dataKey="value" fill="hsl(var(--investment))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Per-Person Summary */}
+      {perPersonSummary.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {perPersonSummary.map(p => (
+            <Card key={p.name} className="bg-card card-shadow">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold text-foreground">{p.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Saldo Operacional</span>
+                  <span className={`font-semibold ${p.balance >= 0 ? 'text-income' : 'text-expense'}`}>
+                    {formatCurrency(p.balance)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Investido</span>
+                  <span className="font-semibold text-investment">{formatCurrency(p.investments)}</span>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-muted-foreground">Caixa Livre</span>
+                  <span className={`font-bold text-lg ${p.freeCash >= 0 ? 'text-income' : 'text-expense'}`}>
+                    {formatCurrency(p.freeCash)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* Balance vs Investment Analysis */}
