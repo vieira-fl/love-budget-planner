@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2, FileUp, Settings } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2, FileUp, Settings, LineChart } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { SummaryCard } from '@/components/SummaryCard';
 import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
