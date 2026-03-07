@@ -205,11 +205,13 @@ export function TransactionList({
                 <div
                   className={cn(
                     'rounded-lg p-2.5',
-                    transaction.type === 'income' ? 'bg-income/10' : 'bg-expense/10'
+                    transaction.type === 'income' ? 'bg-income/10' : transaction.type === 'investment' ? 'bg-investment/10' : 'bg-expense/10'
                   )}
                 >
                   {transaction.type === 'income' ? (
                     <TrendingUp className="h-4 w-4 text-income" />
+                  ) : transaction.type === 'investment' ? (
+                    <LineChart className="h-4 w-4 text-investment" />
                   ) : (
                     <TrendingDown className="h-4 w-4 text-expense" />
                   )}
