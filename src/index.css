@@ -45,6 +45,9 @@
     --balance: 210 80% 50%;
     --balance-foreground: 0 0% 100%;
 
+    --investment: 270 60% 55%;
+    --investment-foreground: 0 0% 100%;
+
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 160 84% 39%;
@@ -107,6 +110,9 @@
 
     --balance: 210 70% 55%;
     --balance-foreground: 0 0% 100%;
+
+    --investment: 270 50% 60%;
+    --investment-foreground: 0 0% 100%;
 
     --border: 220 15% 22%;
     --input: 220 15% 22%;

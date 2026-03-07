@@ -17,6 +17,7 @@ interface EditTransactionDialogProps {
   onSave: (transaction: Transaction) => void;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
+  investmentCategoryLabels?: Record<string, string>;
   paymentMethods?: string[];
 }
 
@@ -27,6 +28,7 @@ export function EditTransactionDialog({
   onSave, 
   expenseCategoryLabels,
   incomeCategoryLabels,
+  investmentCategoryLabels = {},
   paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: EditTransactionDialogProps) {
   const [type, setType] = useState<TransactionType>('expense');
@@ -76,6 +78,7 @@ export function EditTransactionDialog({
 
   const expenseCategories = Object.entries(expenseCategoryLabels);
   const incomeCategories = Object.entries(incomeCategoryLabels);
+  const investmentCategories = Object.entries(investmentCategoryLabels);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -115,6 +118,22 @@ export function EditTransactionDialog({
               )}
             >
               Despesa
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setType('investment');
+                if (type !== 'investment') setCategory('acoes');
+                setTag('');
+              }}
+              className={cn(
+                'flex-1 py-2 rounded-md text-sm font-medium transition-all',
+                type === 'investment'
+                  ? 'bg-investment text-investment-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Investimento
             </button>
           </div>
 
@@ -163,22 +182,21 @@ export function EditTransactionDialog({
 
           <div className="space-y-2">
             <Label className="text-foreground">Categoria</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as ExpenseCategory | IncomeCategory)}>
+            <Select value={category} onValueChange={(value) => setCategory(value)}>
               <SelectTrigger className="bg-background border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {type === 'expense'
-                  ? expenseCategories.map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))
-                  : incomeCategories.map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
+                {(type === 'expense'
+                  ? expenseCategories
+                  : type === 'income'
+                  ? incomeCategories
+                  : investmentCategories
+                ).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

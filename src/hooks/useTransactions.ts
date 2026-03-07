@@ -12,6 +12,7 @@ import {
   defaultThreshold,
   defaultExpenseCategoryLabels,
   defaultIncomeCategoryLabels,
+  defaultInvestmentCategoryLabels,
   normalizeCategoryKey,
   MonthlyComparison,
   CategoryChange,
@@ -59,8 +60,8 @@ const mapRecurrenceToDb = (frontendValue: 'pontual' | 'recorrente'): string => {
 
 const mapDbToTransaction = (db: DbTransaction): Transaction => ({
   id: db.id,
-  type: db.type as 'income' | 'expense',
-  category: normalizeCategoryKey(db.category, db.type as 'income' | 'expense'),
+  type: db.type as 'income' | 'expense' | 'investment',
+  category: normalizeCategoryKey(db.category, db.type as 'income' | 'expense' | 'investment'),
   description: db.description,
   tag: db.tag || undefined,
   amount: Number(db.amount),
@@ -76,6 +77,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
   const [loading, setLoading] = useState(true);
   const [customExpenseCategories, setCustomExpenseCategories] = useState<Record<string, string>>({});
   const [customIncomeCategories, setCustomIncomeCategories] = useState<Record<string, string>>({});
+  const [customInvestmentCategories, setCustomInvestmentCategories] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
   const { getItemsByType, initialized, seedDefaults, loading: listsLoading } = useCustomLists();
@@ -175,6 +177,18 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     };
   }, [getItemsByType, customIncomeCategories]);
 
+  const investmentCategoryLabels = useMemo(() => {
+    const fromDb: Record<string, string> = {};
+    getItemsByType('investment_category').forEach(item => {
+      fromDb[item.value] = item.label;
+    });
+    return {
+      ...defaultInvestmentCategoryLabels,
+      ...fromDb,
+      ...customInvestmentCategories,
+    };
+  }, [getItemsByType, customInvestmentCategories]);
+
   // Build payment methods from custom lists
   const paymentMethods = useMemo(() => {
     const dbMethods = getItemsByType('payment_method');
@@ -192,6 +206,10 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     setCustomIncomeCategories(prev => ({ ...prev, [key]: label }));
   };
 
+  const addInvestmentCategory = (key: string, label: string) => {
+    setCustomInvestmentCategories(prev => ({ ...prev, [key]: label }));
+  };
+
   const totalIncome = useMemo(() => {
     return filteredTransactions
       .filter(t => t.type === 'income')
@@ -205,6 +223,12 @@ export function useTransactions(periodFilter?: PeriodFilter) {
   }, [filteredTransactions]);
 
   const balance = useMemo(() => totalIncome - totalExpenses, [totalIncome, totalExpenses]);
+
+  const totalInvestments = useMemo(() => {
+    return filteredTransactions
+      .filter(t => t.type === 'investment')
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [filteredTransactions]);
 
   const categoryAnalysis = useMemo((): CategoryAnalysis[] => {
     const expensesByCategory = filteredTransactions
@@ -320,7 +344,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
       const monthData = monthsMap.get(monthKey)!;
       if (transaction.type === 'income') {
         monthData.income += transaction.amount;
-      } else {
+      } else if (transaction.type === 'expense') {
         monthData.expenses += transaction.amount;
       }
     });
@@ -389,7 +413,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
       }
       if (t.type === 'income') {
         summaries[t.person].income += t.amount;
-      } else {
+      } else if (t.type === 'expense') {
         summaries[t.person].expenses += t.amount;
       }
     });
@@ -679,6 +703,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     loading,
     totalIncome,
     totalExpenses,
+    totalInvestments,
     balance,
     categoryAnalysis,
     addTransaction,
@@ -687,8 +712,10 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     deleteTransaction,
     expenseCategoryLabels,
     incomeCategoryLabels,
+    investmentCategoryLabels,
     addExpenseCategory,
     addIncomeCategory,
+    addInvestmentCategory,
     top10Expenses,
     monthlyComparison,
     biggestCategoryIncrease,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2, FileUp, Settings } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, Loader2, FileUp, Settings, LineChart } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { SummaryCard } from '@/components/SummaryCard';
 import { CategoryAnalysisTable } from '@/components/CategoryAnalysisCard';
@@ -32,6 +32,7 @@ const Index = () => {
     loading: transactionsLoading,
     totalIncome,
     totalExpenses,
+    totalInvestments,
     balance,
     categoryAnalysis,
     addTransaction,
@@ -40,8 +41,10 @@ const Index = () => {
     deleteTransaction,
     expenseCategoryLabels,
     incomeCategoryLabels,
+    investmentCategoryLabels,
     addExpenseCategory,
     addIncomeCategory,
+    addInvestmentCategory,
     top10Expenses,
     monthlyComparison,
     biggestCategoryIncrease,
@@ -185,8 +188,10 @@ const Index = () => {
                   username={profile?.username || 'Usuário'}
                   expenseCategoryLabels={expenseCategoryLabels}
                   incomeCategoryLabels={incomeCategoryLabels}
+                  investmentCategoryLabels={investmentCategoryLabels}
                   onAddExpenseCategory={addExpenseCategory}
                   onAddIncomeCategory={addIncomeCategory}
+                  onAddInvestmentCategory={addInvestmentCategory}
                   paymentMethods={paymentMethods}
                 />
                 <Button
@@ -223,7 +228,7 @@ const Index = () => {
         ) : (
           <>
             {/* Summary Cards */}
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <SummaryCard
                 title="Receita Total"
                 value={totalIncome}
@@ -241,6 +246,12 @@ const Index = () => {
                 value={balance}
                 icon={Wallet}
                 variant="balance"
+              />
+              <SummaryCard
+                title="Investimentos Totais"
+                value={totalInvestments}
+                icon={LineChart}
+                variant="investment"
               />
             </section>
 
@@ -326,6 +337,7 @@ const Index = () => {
                       onUpdate={updateTransaction}
                       expenseCategoryLabels={expenseCategoryLabels}
                       incomeCategoryLabels={incomeCategoryLabels}
+                      investmentCategoryLabels={investmentCategoryLabels}
                       paymentMethods={paymentMethods}
                     />
                   </section>

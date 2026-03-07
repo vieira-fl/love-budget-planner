@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels } from '@/types/finance';
+import { Transaction, defaultExpenseCategoryLabels, defaultIncomeCategoryLabels, defaultInvestmentCategoryLabels } from '@/types/finance';
 import { cn } from '@/lib/utils';
-import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil, Tag as TagIcon, CreditCard, Filter, X } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, Repeat, Zap, Pencil, Tag as TagIcon, CreditCard, Filter, X, LineChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EditTransactionDialog } from './EditTransactionDialog';
 import {
@@ -28,6 +28,7 @@ interface TransactionListProps {
   onUpdate: (transaction: Transaction) => void;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
+  investmentCategoryLabels?: Record<string, string>;
   paymentMethods?: string[];
 }
 
@@ -37,6 +38,7 @@ export function TransactionList({
   onUpdate,
   expenseCategoryLabels,
   incomeCategoryLabels,
+  investmentCategoryLabels = {},
   paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: TransactionListProps) {
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -101,6 +103,9 @@ export function TransactionList({
     if (transaction.type === 'income') {
       return (incomeCategoryLabels?.[transaction.category]) || defaultIncomeCategoryLabels[transaction.category] || transaction.category;
     }
+    if (transaction.type === 'investment') {
+      return (investmentCategoryLabels?.[transaction.category]) || defaultInvestmentCategoryLabels[transaction.category] || transaction.category;
+    }
     return (expenseCategoryLabels?.[transaction.category]) || defaultExpenseCategoryLabels[transaction.category] || transaction.category;
   };
 
@@ -147,6 +152,7 @@ export function TransactionList({
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="income">Receita</SelectItem>
                 <SelectItem value="expense">Despesa</SelectItem>
+                <SelectItem value="investment">Investimento</SelectItem>
               </SelectContent>
             </Select>
             
@@ -158,7 +164,7 @@ export function TransactionList({
                 <SelectItem value="all">Todas categorias</SelectItem>
                 {filterOptions.categories.map(cat => (
                   <SelectItem key={cat} value={cat}>
-                    {expenseCategoryLabels[cat] || incomeCategoryLabels[cat] || cat}
+                    {expenseCategoryLabels[cat] || incomeCategoryLabels[cat] || investmentCategoryLabels[cat] || cat}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -200,11 +206,13 @@ export function TransactionList({
                 <div
                   className={cn(
                     'rounded-lg p-2.5',
-                    transaction.type === 'income' ? 'bg-income/10' : 'bg-expense/10'
+                    transaction.type === 'income' ? 'bg-income/10' : transaction.type === 'investment' ? 'bg-investment/10' : 'bg-expense/10'
                   )}
                 >
                   {transaction.type === 'income' ? (
                     <TrendingUp className="h-4 w-4 text-income" />
+                  ) : transaction.type === 'investment' ? (
+                    <LineChart className="h-4 w-4 text-investment" />
                   ) : (
                     <TrendingDown className="h-4 w-4 text-expense" />
                   )}
@@ -257,7 +265,7 @@ export function TransactionList({
                   <p
                     className={cn(
                       'font-semibold',
-                      transaction.type === 'income' ? 'text-income' : 'text-expense'
+                      transaction.type === 'income' ? 'text-income' : transaction.type === 'investment' ? 'text-investment' : 'text-expense'
                     )}
                   >
                     {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
@@ -298,6 +306,7 @@ export function TransactionList({
         onSave={handleSave}
         expenseCategoryLabels={expenseCategoryLabels}
         incomeCategoryLabels={incomeCategoryLabels}
+        investmentCategoryLabels={investmentCategoryLabels}
         paymentMethods={paymentMethods}
       />
 

@@ -1,4 +1,4 @@
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = 'income' | 'expense' | 'investment';
 
 export const EXPENSE_CATEGORY_KEYS = [
   'transporte',
@@ -21,6 +21,19 @@ export const INCOME_CATEGORY_KEYS = [
   'outros',
 ] as const;
 
+export const INVESTMENT_CATEGORY_KEYS = [
+  'acoes',
+  'renda_fixa',
+  'fundos',
+  'crypto',
+  'previdencia',
+  'outros',
+] as const;
+
+export type InvestmentCategory =
+  | (typeof INVESTMENT_CATEGORY_KEYS)[number]
+  | string;
+
 export type ExpenseCategory =
   | (typeof EXPENSE_CATEGORY_KEYS)[number]
   | string; // Allow custom categories
@@ -38,7 +51,7 @@ export const PAYMENT_METHODS: PaymentMethod[] = ['Cartão', 'PIX', 'TED', 'Cash'
 export interface Transaction {
   id: string;
   type: TransactionType;
-  category: ExpenseCategory | IncomeCategory;
+  category: ExpenseCategory | IncomeCategory | InvestmentCategory;
   description: string;
   tag?: string;
   amount: number;
@@ -123,12 +136,25 @@ export const defaultIncomeCategoryLabels: Record<IncomeCategory, string> = {
   outros: 'Outros',
 };
 
+export const defaultInvestmentCategoryLabels: Record<InvestmentCategory, string> = {
+  acoes: 'Ações',
+  renda_fixa: 'Renda Fixa',
+  fundos: 'Fundos',
+  crypto: 'Criptomoedas',
+  previdencia: 'Previdência',
+  outros: 'Outros',
+};
+
 export const EXPENSE_CATEGORY_LABELS = EXPENSE_CATEGORY_KEYS.map(
   (key) => defaultExpenseCategoryLabels[key]
 );
 
 export const INCOME_CATEGORY_LABELS = INCOME_CATEGORY_KEYS.map(
   (key) => defaultIncomeCategoryLabels[key]
+);
+
+export const INVESTMENT_CATEGORY_LABELS = INVESTMENT_CATEGORY_KEYS.map(
+  (key) => defaultInvestmentCategoryLabels[key]
 );
 
 const normalizeCategoryInput = (value: string): string =>
@@ -151,7 +177,7 @@ const incomeCategoryAliases: Record<string, IncomeCategory> = {
 export const normalizeCategoryKey = (
   value: string,
   type: TransactionType
-): ExpenseCategory | IncomeCategory => {
+): ExpenseCategory | IncomeCategory | InvestmentCategory => {
   const normalized = normalizeCategoryInput(value);
   if (!normalized) {
     return 'outros';
@@ -159,6 +185,10 @@ export const normalizeCategoryKey = (
 
   if (type === 'income') {
     return incomeCategoryAliases[normalized] ?? normalized;
+  }
+
+  if (type === 'investment') {
+    return normalized;
   }
 
   return expenseCategoryAliases[normalized] ?? normalized;

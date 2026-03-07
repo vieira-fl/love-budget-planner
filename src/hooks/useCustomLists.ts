@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-export type ListType = 'expense_category' | 'income_category' | 'payment_method' | 'tag';
+export type ListType = 'expense_category' | 'income_category' | 'investment_category' | 'payment_method' | 'tag';
 
 export interface ListItem {
   id: string;
@@ -43,9 +43,19 @@ const DEFAULT_PAYMENT_METHODS: Omit<ListItem, 'id'>[] = [
 
 const DEFAULT_TAGS: Omit<ListItem, 'id'>[] = [];
 
+const DEFAULT_INVESTMENT_CATEGORIES: Omit<ListItem, 'id'>[] = [
+  { list_type: 'investment_category', value: 'acoes', label: 'Ações', sort_order: 0 },
+  { list_type: 'investment_category', value: 'renda_fixa', label: 'Renda Fixa', sort_order: 1 },
+  { list_type: 'investment_category', value: 'fundos', label: 'Fundos', sort_order: 2 },
+  { list_type: 'investment_category', value: 'crypto', label: 'Criptomoedas', sort_order: 3 },
+  { list_type: 'investment_category', value: 'previdencia', label: 'Previdência', sort_order: 4 },
+  { list_type: 'investment_category', value: 'outros', label: 'Outros', sort_order: 5 },
+];
+
 export const DEFAULTS_BY_TYPE: Record<ListType, Omit<ListItem, 'id'>[]> = {
   expense_category: DEFAULT_EXPENSE_CATEGORIES,
   income_category: DEFAULT_INCOME_CATEGORIES,
+  investment_category: DEFAULT_INVESTMENT_CATEGORIES,
   payment_method: DEFAULT_PAYMENT_METHODS,
   tag: DEFAULT_TAGS,
 };
@@ -56,6 +66,7 @@ export function useCustomLists() {
   const [initialized, setInitialized] = useState<Record<ListType, boolean>>({
     expense_category: false,
     income_category: false,
+    investment_category: false,
     payment_method: false,
     tag: false,
   });
@@ -82,7 +93,7 @@ export function useCustomLists() {
       setItems(mapped);
 
       // Check which types have been initialized (have at least one item)
-      const types: ListType[] = ['expense_category', 'income_category', 'payment_method', 'tag'];
+      const types: ListType[] = ['expense_category', 'income_category', 'investment_category', 'payment_method', 'tag'];
       const init: Record<ListType, boolean> = {} as any;
       types.forEach(t => {
         init[t] = mapped.some(i => i.list_type === t);

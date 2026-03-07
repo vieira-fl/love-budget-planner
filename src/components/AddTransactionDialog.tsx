@@ -18,8 +18,10 @@ interface AddTransactionDialogProps {
   username: string;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
+  investmentCategoryLabels: Record<string, string>;
   onAddExpenseCategory: (key: string, label: string) => void;
   onAddIncomeCategory: (key: string, label: string) => void;
+  onAddInvestmentCategory: (key: string, label: string) => void;
   paymentMethods?: string[];
 }
 
@@ -44,8 +46,10 @@ export function AddTransactionDialog({
   username,
   expenseCategoryLabels,
   incomeCategoryLabels,
+  investmentCategoryLabels,
   onAddExpenseCategory,
   onAddIncomeCategory,
+  onAddInvestmentCategory,
   paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: AddTransactionDialogProps) {
   const [open, setOpen] = useState(false);
@@ -83,7 +87,7 @@ export function AddTransactionDialog({
       person: username,
       date: parsedDate,
       recurrence,
-      includeInSplit,
+      includeInSplit: type === 'investment' ? false : includeInSplit,
       paymentMethod: type === 'expense' ? paymentMethod : undefined,
     };
 
@@ -134,8 +138,10 @@ export function AddTransactionDialog({
     
     if (type === 'expense') {
       onAddExpenseCategory(key, newCategoryName);
-    } else {
+    } else if (type === 'income') {
       onAddIncomeCategory(key, newCategoryName);
+    } else {
+      onAddInvestmentCategory(key, newCategoryName);
     }
     
     setCategory(key);
@@ -161,6 +167,7 @@ export function AddTransactionDialog({
 
   const expenseCategories = Object.entries(expenseCategoryLabels);
   const incomeCategories = Object.entries(incomeCategoryLabels);
+  const investmentCategories = Object.entries(investmentCategoryLabels);
 
   const currentYear = new Date().getFullYear();
   const years = [currentYear - 1, currentYear, currentYear + 1];
@@ -209,6 +216,22 @@ export function AddTransactionDialog({
               )}
             >
               Despesa
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setType('investment');
+                setCategory('acoes');
+                setTag('');
+              }}
+              className={cn(
+                'flex-1 py-2 rounded-md text-sm font-medium transition-all',
+                type === 'investment'
+                  ? 'bg-investment text-investment-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Investimento
             </button>
           </div>
 
@@ -281,22 +304,21 @@ export function AddTransactionDialog({
                 </Button>
               </div>
             ) : (
-              <Select value={category} onValueChange={(value) => setCategory(value as ExpenseCategory | IncomeCategory)}>
+              <Select value={category} onValueChange={(value) => setCategory(value)}>
                 <SelectTrigger className="bg-background border-input">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {type === 'expense'
-                    ? expenseCategories.map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))
-                    : incomeCategories.map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
+                  {(type === 'expense'
+                    ? expenseCategories
+                    : type === 'income'
+                    ? incomeCategories
+                    : investmentCategories
+                  ).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
