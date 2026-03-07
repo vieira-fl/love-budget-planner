@@ -28,6 +28,7 @@ export function EditTransactionDialog({
   onSave, 
   expenseCategoryLabels,
   incomeCategoryLabels,
+  investmentCategoryLabels = {},
   paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: EditTransactionDialogProps) {
   const [type, setType] = useState<TransactionType>('expense');
