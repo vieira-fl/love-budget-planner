@@ -177,7 +177,7 @@ const incomeCategoryAliases: Record<string, IncomeCategory> = {
 export const normalizeCategoryKey = (
   value: string,
   type: TransactionType
-): ExpenseCategory | IncomeCategory => {
+): ExpenseCategory | IncomeCategory | InvestmentCategory => {
   const normalized = normalizeCategoryInput(value);
   if (!normalized) {
     return 'outros';
@@ -185,6 +185,10 @@ export const normalizeCategoryKey = (
 
   if (type === 'income') {
     return incomeCategoryAliases[normalized] ?? normalized;
+  }
+
+  if (type === 'investment') {
+    return normalized;
   }
 
   return expenseCategoryAliases[normalized] ?? normalized;
