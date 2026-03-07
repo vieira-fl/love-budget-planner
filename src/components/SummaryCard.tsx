@@ -5,7 +5,7 @@ interface SummaryCardProps {
   title: string;
   value: number;
   icon: LucideIcon;
-  variant: 'income' | 'expense' | 'balance';
+  variant: 'income' | 'expense' | 'balance' | 'investment';
   className?: string;
 }
 
