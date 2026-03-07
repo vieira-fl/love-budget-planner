@@ -289,27 +289,37 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
             <CardTitle className="text-lg font-semibold text-foreground">Por Categoria</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={byCategory}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={3}
-                    dataKey="value"
-                    nameKey="name"
-                  >
-                    {byCategory.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">%</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {byCategory.map((cat, i) => {
+                    const pct = totalInvestments > 0 ? (cat.value / totalInvestments) * 100 : 0;
+                    return (
+                      <TableRow key={cat.name}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                            <span className="font-medium text-foreground">{cat.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-investment">
+                          {formatCurrencyFull(cat.value)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {pct.toFixed(1)}%
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
