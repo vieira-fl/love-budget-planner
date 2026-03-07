@@ -413,7 +413,7 @@ export function useTransactions(periodFilter?: PeriodFilter) {
       }
       if (t.type === 'income') {
         summaries[t.person].income += t.amount;
-      } else {
+      } else if (t.type === 'expense') {
         summaries[t.person].expenses += t.amount;
       }
     });
