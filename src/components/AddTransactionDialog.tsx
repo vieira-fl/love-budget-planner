@@ -46,8 +46,10 @@ export function AddTransactionDialog({
   username,
   expenseCategoryLabels,
   incomeCategoryLabels,
+  investmentCategoryLabels,
   onAddExpenseCategory,
   onAddIncomeCategory,
+  onAddInvestmentCategory,
   paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: AddTransactionDialogProps) {
   const [open, setOpen] = useState(false);
