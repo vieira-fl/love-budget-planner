@@ -304,22 +304,21 @@ export function AddTransactionDialog({
                 </Button>
               </div>
             ) : (
-              <Select value={category} onValueChange={(value) => setCategory(value as ExpenseCategory | IncomeCategory)}>
+              <Select value={category} onValueChange={(value) => setCategory(value)}>
                 <SelectTrigger className="bg-background border-input">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {type === 'expense'
-                    ? expenseCategories.map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))
-                    : incomeCategories.map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
+                  {(type === 'expense'
+                    ? expenseCategories
+                    : type === 'income'
+                    ? incomeCategories
+                    : investmentCategories
+                  ).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
