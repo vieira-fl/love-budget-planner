@@ -17,6 +17,7 @@ interface EditTransactionDialogProps {
   onSave: (transaction: Transaction) => void;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
+  investmentCategoryLabels?: Record<string, string>;
   paymentMethods?: string[];
 }
 
