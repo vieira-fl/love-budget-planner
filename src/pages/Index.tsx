@@ -13,6 +13,7 @@ import { CumulativeChart } from '@/components/CumulativeChart';
 import { ExpenseSplitCard } from '@/components/ExpenseSplitCard';
 import { SplitCategoryBreakdown } from '@/components/SplitCategoryBreakdown';
 import { DetailedSplitCard } from '@/components/DetailedSplitCard';
+import { InvestmentsTab } from '@/components/InvestmentsTab';
 import { PersonSummaryCard } from '@/components/PersonSummaryCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImportExpensesDialog } from '@/components/ImportExpensesDialog';
@@ -306,10 +307,11 @@ const Index = () => {
             {/* Tabs - only show if there are transactions */}
             {transactions.length > 0 && (
               <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3 max-w-lg">
+                <TabsList className="grid w-full grid-cols-4 max-w-xl">
                   <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                   <TabsTrigger value="comparison">Comparativo</TabsTrigger>
                   <TabsTrigger value="split">Rateio</TabsTrigger>
+                  <TabsTrigger value="investments">Investimentos</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
@@ -414,6 +416,15 @@ const Index = () => {
                       </div>
                     </section>
                   )}
+                </TabsContent>
+
+                <TabsContent value="investments" className="space-y-6">
+                  <InvestmentsTab
+                    transactions={transactions}
+                    investmentCategoryLabels={investmentCategoryLabels}
+                    totalInvestments={totalInvestments}
+                    uniquePeople={uniquePeople}
+                  />
                 </TabsContent>
               </Tabs>
             )}

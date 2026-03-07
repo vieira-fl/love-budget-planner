@@ -37,7 +37,7 @@ export function CumulativeChart({ transactions }: CumulativeChartProps) {
       
       if (t.type === 'income') {
         existing.income += t.amount;
-      } else {
+      } else if (t.type === 'expense') {
         existing.expenses += t.amount;
       }
       
@@ -79,7 +79,7 @@ export function CumulativeChart({ transactions }: CumulativeChartProps) {
 
       if (t.type === 'income') {
         existing.income += t.amount;
-      } else {
+      } else if (t.type === 'expense') {
         existing.expenses += t.amount;
       }
 
