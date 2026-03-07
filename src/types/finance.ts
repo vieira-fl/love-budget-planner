@@ -153,6 +153,10 @@ export const INCOME_CATEGORY_LABELS = INCOME_CATEGORY_KEYS.map(
   (key) => defaultIncomeCategoryLabels[key]
 );
 
+export const INVESTMENT_CATEGORY_LABELS = INVESTMENT_CATEGORY_KEYS.map(
+  (key) => defaultInvestmentCategoryLabels[key]
+);
+
 const normalizeCategoryInput = (value: string): string =>
   value
     .trim()
