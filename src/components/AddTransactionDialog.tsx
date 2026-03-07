@@ -457,23 +457,25 @@ export function AddTransactionDialog({
             )}
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div className="space-y-0.5">
-              <Label htmlFor="include-split" className="text-foreground text-sm font-medium">
-                Incluir no rateio
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {type === 'expense'
-                  ? 'Incluir esta despesa no cálculo de divisão entre o casal'
-                  : 'Incluir esta receita no cálculo do percentual de contribuição para o rateio'}
-              </p>
+          {type !== 'investment' && (
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="include-split" className="text-foreground text-sm font-medium">
+                  Incluir no rateio
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {type === 'expense'
+                    ? 'Incluir esta despesa no cálculo de divisão entre o casal'
+                    : 'Incluir esta receita no cálculo do percentual de contribuição para o rateio'}
+                </p>
+              </div>
+              <Switch
+                id="include-split"
+                checked={includeInSplit}
+                onCheckedChange={setIncludeInSplit}
+              />
             </div>
-            <Switch
-              id="include-split"
-              checked={includeInSplit}
-              onCheckedChange={setIncludeInSplit}
-            />
-          </div>
+          )}
 
           <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground">
             {enableMultiMonth && selectedMonths.length > 1 
