@@ -66,6 +66,7 @@ export function useCustomLists() {
   const [initialized, setInitialized] = useState<Record<ListType, boolean>>({
     expense_category: false,
     income_category: false,
+    investment_category: false,
     payment_method: false,
     tag: false,
   });
