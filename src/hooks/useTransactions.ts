@@ -60,8 +60,8 @@ const mapRecurrenceToDb = (frontendValue: 'pontual' | 'recorrente'): string => {
 
 const mapDbToTransaction = (db: DbTransaction): Transaction => ({
   id: db.id,
-  type: db.type as 'income' | 'expense',
-  category: normalizeCategoryKey(db.category, db.type as 'income' | 'expense'),
+  type: db.type as 'income' | 'expense' | 'investment',
+  category: normalizeCategoryKey(db.category, db.type as 'income' | 'expense' | 'investment'),
   description: db.description,
   tag: db.tag || undefined,
   amount: Number(db.amount),
