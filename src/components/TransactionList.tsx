@@ -28,6 +28,7 @@ interface TransactionListProps {
   onUpdate: (transaction: Transaction) => void;
   expenseCategoryLabels: Record<string, string>;
   incomeCategoryLabels: Record<string, string>;
+  investmentCategoryLabels?: Record<string, string>;
   paymentMethods?: string[];
 }
 
@@ -37,6 +38,7 @@ export function TransactionList({
   onUpdate,
   expenseCategoryLabels,
   incomeCategoryLabels,
+  investmentCategoryLabels = {},
   paymentMethods = ['Cartão', 'PIX', 'TED', 'Cash'],
 }: TransactionListProps) {
   const [typeFilter, setTypeFilter] = useState<string>('all');
