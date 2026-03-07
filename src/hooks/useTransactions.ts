@@ -177,6 +177,18 @@ export function useTransactions(periodFilter?: PeriodFilter) {
     };
   }, [getItemsByType, customIncomeCategories]);
 
+  const investmentCategoryLabels = useMemo(() => {
+    const fromDb: Record<string, string> = {};
+    getItemsByType('investment_category').forEach(item => {
+      fromDb[item.value] = item.label;
+    });
+    return {
+      ...defaultInvestmentCategoryLabels,
+      ...fromDb,
+      ...customInvestmentCategories,
+    };
+  }, [getItemsByType, customInvestmentCategories]);
+
   // Build payment methods from custom lists
   const paymentMethods = useMemo(() => {
     const dbMethods = getItemsByType('payment_method');
