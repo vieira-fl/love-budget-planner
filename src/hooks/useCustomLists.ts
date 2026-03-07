@@ -93,7 +93,7 @@ export function useCustomLists() {
       setItems(mapped);
 
       // Check which types have been initialized (have at least one item)
-      const types: ListType[] = ['expense_category', 'income_category', 'payment_method', 'tag'];
+      const types: ListType[] = ['expense_category', 'income_category', 'investment_category', 'payment_method', 'tag'];
       const init: Record<ListType, boolean> = {} as any;
       types.forEach(t => {
         init[t] = mapped.some(i => i.list_type === t);
