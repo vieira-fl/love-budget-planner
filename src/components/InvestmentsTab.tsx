@@ -126,10 +126,8 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
   }, [transactions]);
 
   const totalFreeCash = useMemo(() => {
-    return monthlyBalanceVsInvestment.reduce((sum, row) => {
-      return row.difference > 0 ? sum + row.difference : sum;
-    }, 0);
-  }, [monthlyBalanceVsInvestment]);
+    return totalBalance - totalInvestments;
+  }, [totalBalance, totalInvestments]);
 
   const investmentPct = totalBalance !== 0 ? (totalInvestments / Math.abs(totalBalance)) * 100 : 0;
   const freeCashPct = totalBalance !== 0 ? (totalFreeCash / Math.abs(totalBalance)) * 100 : 0;
