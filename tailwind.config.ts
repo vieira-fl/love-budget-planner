@@ -70,6 +70,10 @@ export default {
           DEFAULT: "hsl(var(--balance))",
           foreground: "hsl(var(--balance-foreground))",
         },
+        investment: {
+          DEFAULT: "hsl(var(--investment))",
+          foreground: "hsl(var(--investment-foreground))",
+        },
         chart: {
           1: "hsl(var(--chart-1))",
           2: "hsl(var(--chart-2))",
