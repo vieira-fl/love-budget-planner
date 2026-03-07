@@ -163,7 +163,7 @@ export function TransactionList({
                 <SelectItem value="all">Todas categorias</SelectItem>
                 {filterOptions.categories.map(cat => (
                   <SelectItem key={cat} value={cat}>
-                    {expenseCategoryLabels[cat] || incomeCategoryLabels[cat] || cat}
+                    {expenseCategoryLabels[cat] || incomeCategoryLabels[cat] || investmentCategoryLabels[cat] || cat}
                   </SelectItem>
                 ))}
               </SelectContent>
