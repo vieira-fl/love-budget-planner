@@ -119,6 +119,25 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
   const formatCurrencyFull = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
+  // Summary calculations
+  const totalBalance = useMemo(() => {
+    let income = 0, expenses = 0;
+    transactions.forEach(t => {
+      if (t.type === 'income') income += t.amount;
+      else if (t.type === 'expense') expenses += t.amount;
+    });
+    return income - expenses;
+  }, [transactions]);
+
+  const totalFreeCash = useMemo(() => {
+    return monthlyBalanceVsInvestment.reduce((sum, row) => {
+      return row.difference > 0 ? sum + row.difference : sum;
+    }, 0);
+  }, [monthlyBalanceVsInvestment]);
+
+  const investmentPct = totalBalance !== 0 ? (totalInvestments / Math.abs(totalBalance)) * 100 : 0;
+  const freeCashPct = totalBalance !== 0 ? (totalFreeCash / Math.abs(totalBalance)) * 100 : 0;
+
   if (investmentTransactions.length === 0) {
     return (
       <div className="text-center py-12">
@@ -137,6 +156,41 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
 
   return (
     <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="bg-card card-shadow">
+          <CardContent className="pt-5 pb-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Saldo Operacional</p>
+            <p className={`text-2xl font-bold mt-1 ${totalBalance >= 0 ? 'text-income' : 'text-expense'}`}>
+              {formatCurrency(totalBalance)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Receitas − Despesas do período</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card card-shadow">
+          <CardContent className="pt-5 pb-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Investido</p>
+            <p className="text-2xl font-bold mt-1 text-investment">
+              {formatCurrency(totalInvestments)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {investmentPct.toFixed(1)}% do saldo operacional
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card card-shadow">
+          <CardContent className="pt-5 pb-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Caixa Livre Total</p>
+            <p className={`text-2xl font-bold mt-1 ${totalFreeCash >= 0 ? 'text-income' : 'text-expense'}`}>
+              {formatCurrency(totalFreeCash)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {freeCashPct.toFixed(1)}% do saldo operacional
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Monthly Evolution */}
       {monthlyEvolution.length > 0 && (
         <Card className="bg-card card-shadow">
