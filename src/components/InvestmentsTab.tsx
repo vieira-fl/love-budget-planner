@@ -119,6 +119,25 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
   const formatCurrencyFull = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
+  // Summary calculations
+  const totalBalance = useMemo(() => {
+    let income = 0, expenses = 0;
+    transactions.forEach(t => {
+      if (t.type === 'income') income += t.amount;
+      else if (t.type === 'expense') expenses += t.amount;
+    });
+    return income - expenses;
+  }, [transactions]);
+
+  const totalFreeCash = useMemo(() => {
+    return monthlyBalanceVsInvestment.reduce((sum, row) => {
+      return row.difference > 0 ? sum + row.difference : sum;
+    }, 0);
+  }, [monthlyBalanceVsInvestment]);
+
+  const investmentPct = totalBalance !== 0 ? (totalInvestments / Math.abs(totalBalance)) * 100 : 0;
+  const freeCashPct = totalBalance !== 0 ? (totalFreeCash / Math.abs(totalBalance)) * 100 : 0;
+
   if (investmentTransactions.length === 0) {
     return (
       <div className="text-center py-12">
