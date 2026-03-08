@@ -547,6 +547,7 @@ function TableEntryContent() {
               onSelectAll={selectAll}
               onOptionCommit={registerOption}
               onBrlBlur={formatBrlOnBlur}
+              onDescriptionLookup={handleDescriptionLookup}
             />
           </CardContent>
         </Card>
