@@ -124,10 +124,10 @@ export function EditableTable({
 
   return (
     <div className="border rounded-lg overflow-x-auto">
-      <Table>
+      <Table className="text-xs">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px]">
+            <TableHead className="w-[40px] px-2">
               <Checkbox
                 checked={allSelected}
                 ref={(el) => {
@@ -139,16 +139,14 @@ export function EditableTable({
                 aria-label="Selecionar todos"
               />
             </TableHead>
-            <SortableHeader field="data" className="min-w-[120px]">Data</SortableHeader>
-            <SortableHeader field="descricao" className="min-w-[200px]">Descrição</SortableHeader>
-            <SortableHeader field="brl" className="min-w-[120px]">Valor (R$)</SortableHeader>
-            <SortableHeader field="responsavel" className="min-w-[150px]">Responsável</SortableHeader>
-            <SortableHeader field="categoria" className="min-w-[150px]">Categoria</SortableHeader>
-            <SortableHeader field="tipo" className="min-w-[120px]">Tipo</SortableHeader>
-            <SortableHeader field="formaPgto" className="min-w-[120px]">Forma PGTO</SortableHeader>
-            <SortableHeader field="tagDespesa" className="min-w-[130px]">Tag</SortableHeader>
-            <SortableHeader field="incluirRateio" className="w-[80px] text-center">Rateio</SortableHeader>
-            <SortableHeader field="parcelado" className="w-[80px] text-center">Parcelado</SortableHeader>
+            <SortableHeader field="data" className="min-w-[100px] px-2">Data</SortableHeader>
+            <SortableHeader field="descricao" className="min-w-[160px] px-2">Descrição</SortableHeader>
+            <SortableHeader field="brl" className="min-w-[100px] px-2">Valor (R$)</SortableHeader>
+            <SortableHeader field="responsavel" className="min-w-[120px] px-2">Responsável</SortableHeader>
+            <SortableHeader field="categoria" className="min-w-[120px] px-2">Categoria</SortableHeader>
+            <SortableHeader field="tipo" className="min-w-[100px] px-2">Tipo</SortableHeader>
+            <SortableHeader field="tagDespesa" className="min-w-[110px] px-2">Tag</SortableHeader>
+            <SortableHeader field="incluirRateio" className="w-[60px] text-center px-2">Rateio</SortableHeader>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -162,49 +160,49 @@ export function EditableTable({
 
             return (
               <TableRow key={row.id}>
-                <TableCell>
+                <TableCell className="px-2 py-1">
                   <Checkbox
                     checked={selectedRows.has(row.id)}
                     onCheckedChange={(checked) => onSelectRow(row.id, !!checked)}
                     aria-label={`Selecionar linha ${index + 1}`}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-1">
                   <Input
                     value={row.data}
                     onChange={(e) => onRowChange(row.id, "data", formatDateInput(e.target.value))}
                     placeholder="dd/mm/aaaa"
                     inputMode="numeric"
-                    className={cn("h-8", dataError && errorClass)}
+                    className={cn("h-7 text-xs", dataError && errorClass)}
                     title={dataError}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-1">
                   <Input
                     value={row.descricao}
                     onChange={(e) => onRowChange(row.id, "descricao", e.target.value)}
                     placeholder="Descrição"
-                    className={cn("h-8", descricaoError && errorClass)}
+                    className={cn("h-7 text-xs", descricaoError && errorClass)}
                     title={descricaoError}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-1">
                   <Input
                     value={row.brl}
                     onChange={(e) => onRowChange(row.id, "brl", sanitizeBRLInput(e.target.value))}
                     onBlur={() => onBrlBlur(row.id)}
                     placeholder="0,00"
                     inputMode="decimal"
-                    className={cn("h-8", brlError && errorClass)}
+                    className={cn("h-7 text-xs", brlError && errorClass)}
                     title={brlError}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-1">
                   <Select
                     value={row.responsavel}
                     onValueChange={(value) => onRowChange(row.id, "responsavel", value)}
                   >
-                    <SelectTrigger className={cn("h-8", responsavelError && errorClass)}>
+                    <SelectTrigger className={cn("h-7 text-xs", responsavelError && errorClass)}>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -216,12 +214,12 @@ export function EditableTable({
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-1">
                   <Select
                     value={row.categoria}
                     onValueChange={(value) => onRowChange(row.id, "categoria", value)}
                   >
-                    <SelectTrigger className={cn("h-8", categoriaError && errorClass)} title={categoriaError}>
+                    <SelectTrigger className={cn("h-7 text-xs", categoriaError && errorClass)} title={categoriaError}>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -233,12 +231,12 @@ export function EditableTable({
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-1">
                   <Select
                     value={row.tipo}
                     onValueChange={(value) => onRowChange(row.id, "tipo", value)}
                   >
-                    <SelectTrigger className={cn("h-8", tipoError && errorClass)} title={tipoError}>
+                    <SelectTrigger className={cn("h-7 text-xs", tipoError && errorClass)} title={tipoError}>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -247,24 +245,7 @@ export function EditableTable({
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell>
-                  <Select
-                    value={row.formaPgto}
-                    onValueChange={(value) => onRowChange(row.id, "formaPgto", value as PaymentMethod)}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DEFAULT_PAYMENT_METHODS.map((method) => (
-                        <SelectItem key={method} value={method}>
-                          {method}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-1">
                   <Input
                     value={row.tagDespesa || ""}
                     onChange={(e) => onRowChange(row.id, "tagDespesa", e.target.value)}
@@ -276,21 +257,14 @@ export function EditableTable({
                     }}
                     list="table-entry-tags"
                     placeholder="Opcional"
-                    className="h-8"
+                    className="h-7 text-xs"
                   />
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center px-2 py-1">
                   <Checkbox
                     checked={row.incluirRateio}
                     onCheckedChange={(checked) => onRowChange(row.id, "incluirRateio", !!checked)}
                     aria-label="Incluir no rateio"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Checkbox
-                    checked={row.parcelado}
-                    onCheckedChange={(checked) => onRowChange(row.id, "parcelado", !!checked)}
-                    aria-label="Parcelado"
                   />
                 </TableCell>
               </TableRow>
