@@ -22,6 +22,7 @@ interface EditableTableProps {
   onSelectAll: (selected: boolean) => void;
   onOptionCommit: (field: "categoria" | "tipo" | "tagDespesa", value: string) => void;
   onBrlBlur: (id: string) => void;
+  onDescriptionLookup?: (id: string, description: string) => void;
 }
 
 export function EditableTable({
