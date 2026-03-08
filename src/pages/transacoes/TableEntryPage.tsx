@@ -1,12 +1,13 @@
 import { Component, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw, Loader2, CheckCircle2, XCircle, X } from "lucide-react";
+import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw, Loader2, CheckCircle2, XCircle, X, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTransactions } from "@/hooks/useTransactions";
 import { supabase } from "@/integrations/supabase/client";
@@ -155,6 +156,31 @@ function TableEntryContent() {
     },
     [lookupTransaction, rows, updateRow]
   );
+
+  const handleAutoFillAll = useCallback(() => {
+    let filled = 0;
+    for (const row of rows) {
+      if (!row.descricao.trim()) continue;
+      const match = lookupTransaction(row.descricao);
+      if (!match) continue;
+      if (row.categoria === "Outros" || !row.categoria) {
+        updateRow(row.id, "categoria", match.categoria);
+      }
+      if (row.tipo === "Pontual" || !row.tipo) {
+        updateRow(row.id, "tipo", match.tipo);
+      }
+      if (!row.tagDespesa) {
+        updateRow(row.id, "tagDespesa", match.tagDespesa);
+      }
+      updateRow(row.id, "incluirRateio", match.incluirRateio);
+      filled++;
+    }
+    if (filled === 0) {
+      toast.info("Nenhuma correspondência encontrada para auto-classificação.");
+    } else {
+      toast.success(`${filled} linha(s) auto-classificada(s) com sucesso.`);
+    }
+  }, [rows, lookupTransaction, updateRow]);
 
   const [showClearModal, setShowClearModal] = useState(false);
   const [showErrorsModal, setShowErrorsModal] = useState(false);
@@ -537,6 +563,15 @@ function TableEntryContent() {
                     Preencher por arquivo
                   </>
                 )}
+              </Button>
+
+              <Button
+                onClick={handleAutoFillAll}
+                variant="outline"
+                disabled={!hasRows}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Auto-classificar
               </Button>
 
               <Button onClick={handleValidate}>
