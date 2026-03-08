@@ -133,7 +133,7 @@ export function EditTransactionDialog({
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Investimento
+              Reserva
             </button>
           </div>
 

@@ -152,7 +152,7 @@ export function TransactionList({
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="income">Receita</SelectItem>
                 <SelectItem value="expense">Despesa</SelectItem>
-                <SelectItem value="investment">Investimento</SelectItem>
+                <SelectItem value="investment">Reserva</SelectItem>
               </SelectContent>
             </Select>
             

@@ -380,7 +380,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
             <LineChartIcon className="h-5 w-5 text-investment" />
-            Detalhamento dos Investimentos
+            Detalhamento das Reservas
           </CardTitle>
         </CardHeader>
         <CardContent>
