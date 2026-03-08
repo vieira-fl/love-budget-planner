@@ -21,14 +21,7 @@ export const INCOME_CATEGORY_KEYS = [
   'outros',
 ] as const;
 
-export const INVESTMENT_CATEGORY_KEYS = [
-  'acoes',
-  'renda_fixa',
-  'fundos',
-  'crypto',
-  'previdencia',
-  'outros',
-] as const;
+export const INVESTMENT_CATEGORY_KEYS = [] as const;
 
 export type InvestmentCategory =
   | (typeof INVESTMENT_CATEGORY_KEYS)[number]
