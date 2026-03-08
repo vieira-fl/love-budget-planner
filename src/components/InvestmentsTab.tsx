@@ -191,7 +191,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
             Por Categoria
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Defina metas para cada categoria de investimento e acompanhe o progresso.
+            Defina metas para cada categoria de reserva e acompanhe o progresso.
           </p>
         </CardHeader>
         <CardContent>
