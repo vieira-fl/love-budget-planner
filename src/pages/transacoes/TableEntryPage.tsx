@@ -132,6 +132,30 @@ function TableEntryContent() {
     validate,
   } = useTableEntry({ defaultResponsavel: userName, userId });
 
+  const { lookup: lookupTransaction } = useTransactionLookup();
+
+  const handleDescriptionLookup = useCallback(
+    (id: string, description: string) => {
+      const match = lookupTransaction(description);
+      if (!match) return;
+      // Auto-fill classification fields from the most recent matching transaction
+      const row = rows.find((r) => r.id === id);
+      if (!row) return;
+      // Only fill if the field still has its default/empty value
+      if (row.categoria === "Outros" || !row.categoria) {
+        updateRow(id, "categoria", match.categoria);
+      }
+      if (row.tipo === "Pontual" || !row.tipo) {
+        updateRow(id, "tipo", match.tipo);
+      }
+      if (!row.tagDespesa) {
+        updateRow(id, "tagDespesa", match.tagDespesa);
+      }
+      updateRow(id, "incluirRateio", match.incluirRateio);
+    },
+    [lookupTransaction, rows, updateRow]
+  );
+
   const [showClearModal, setShowClearModal] = useState(false);
   const [showErrorsModal, setShowErrorsModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
