@@ -38,6 +38,7 @@ export function EditableTable({
   onSelectAll,
   onOptionCommit,
   onBrlBlur,
+  onDescriptionLookup,
 }: EditableTableProps) {
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
