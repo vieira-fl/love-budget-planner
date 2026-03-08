@@ -291,7 +291,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
               Saldo Mensal vs Reservas
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Compara o saldo operacional (receitas − despesas) com os investimentos realizados em cada mês.
+              Compara o saldo operacional (receitas − despesas) com as reservas realizadas em cada mês.
             </p>
           </CardHeader>
           <CardContent>
