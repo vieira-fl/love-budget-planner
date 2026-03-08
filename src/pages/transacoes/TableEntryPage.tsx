@@ -1,4 +1,4 @@
-import { Component, ReactNode, useMemo, useRef, useState } from "react";
+import { Component, ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EditableTable } from "./components/EditableTable";
 import { ConfirmationModal, ErrorsModal, InfoModal, SaveErrorModal, ClearConfirmModal } from "./components/ValidationModals";
 import { useTableEntry } from "./hooks/useTableEntry";
+import { useTransactionLookup } from "./hooks/useTransactionLookup";
 import { ValidationResult } from "./types";
 import { parseBRL } from "./utils/tableEntryUtils";
 import { parseCsvContent } from "./utils/csvParser";
@@ -130,6 +131,30 @@ function TableEntryContent() {
     formatBrlOnBlur,
     validate,
   } = useTableEntry({ defaultResponsavel: userName, userId });
+
+  const { lookup: lookupTransaction } = useTransactionLookup();
+
+  const handleDescriptionLookup = useCallback(
+    (id: string, description: string) => {
+      const match = lookupTransaction(description);
+      if (!match) return;
+      // Auto-fill classification fields from the most recent matching transaction
+      const row = rows.find((r) => r.id === id);
+      if (!row) return;
+      // Only fill if the field still has its default/empty value
+      if (row.categoria === "Outros" || !row.categoria) {
+        updateRow(id, "categoria", match.categoria);
+      }
+      if (row.tipo === "Pontual" || !row.tipo) {
+        updateRow(id, "tipo", match.tipo);
+      }
+      if (!row.tagDespesa) {
+        updateRow(id, "tagDespesa", match.tagDespesa);
+      }
+      updateRow(id, "incluirRateio", match.incluirRateio);
+    },
+    [lookupTransaction, rows, updateRow]
+  );
 
   const [showClearModal, setShowClearModal] = useState(false);
   const [showErrorsModal, setShowErrorsModal] = useState(false);
@@ -546,6 +571,7 @@ function TableEntryContent() {
               onSelectAll={selectAll}
               onOptionCommit={registerOption}
               onBrlBlur={formatBrlOnBlur}
+              onDescriptionLookup={handleDescriptionLookup}
             />
           </CardContent>
         </Card>

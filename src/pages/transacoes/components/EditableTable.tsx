@@ -22,6 +22,7 @@ interface EditableTableProps {
   onSelectAll: (selected: boolean) => void;
   onOptionCommit: (field: "categoria" | "tipo" | "tagDespesa", value: string) => void;
   onBrlBlur: (id: string) => void;
+  onDescriptionLookup?: (id: string, description: string) => void;
 }
 
 export function EditableTable({
@@ -37,6 +38,7 @@ export function EditableTable({
   onSelectAll,
   onOptionCommit,
   onBrlBlur,
+  onDescriptionLookup,
 }: EditableTableProps) {
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -181,6 +183,7 @@ export function EditableTable({
                   <Input
                     value={row.descricao}
                     onChange={(e) => onRowChange(row.id, "descricao", e.target.value)}
+                    onBlur={() => onDescriptionLookup?.(row.id, row.descricao)}
                     placeholder="Descrição"
                     className={cn("h-7 text-xs", descricaoError && errorClass)}
                     title={descricaoError}
