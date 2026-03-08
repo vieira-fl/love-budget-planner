@@ -115,6 +115,14 @@ function TableEntryContent() {
     () => Object.values(expenseCategoryLabels),
     [expenseCategoryLabels]
   );
+
+  // Map DB category key (e.g. "moradia") to display label (e.g. "Moradia")
+  const categoryKeyToLabel = useCallback(
+    (key: string): string => {
+      return expenseCategoryLabels[key] || key;
+    },
+    [expenseCategoryLabels]
+  );
   
   const {
     rows,
