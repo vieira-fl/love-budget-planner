@@ -156,6 +156,31 @@ function TableEntryContent() {
     [lookupTransaction, rows, updateRow]
   );
 
+  const handleAutoFillAll = useCallback(() => {
+    let filled = 0;
+    for (const row of rows) {
+      if (!row.descricao.trim()) continue;
+      const match = lookupTransaction(row.descricao);
+      if (!match) continue;
+      if (row.categoria === "Outros" || !row.categoria) {
+        updateRow(row.id, "categoria", match.categoria);
+      }
+      if (row.tipo === "Pontual" || !row.tipo) {
+        updateRow(row.id, "tipo", match.tipo);
+      }
+      if (!row.tagDespesa) {
+        updateRow(row.id, "tagDespesa", match.tagDespesa);
+      }
+      updateRow(row.id, "incluirRateio", match.incluirRateio);
+      filled++;
+    }
+    if (filled === 0) {
+      toast.info("Nenhuma correspondência encontrada para auto-classificação.");
+    } else {
+      toast.success(`${filled} linha(s) auto-classificada(s) com sucesso.`);
+    }
+  }, [rows, lookupTransaction, updateRow]);
+
   const [showClearModal, setShowClearModal] = useState(false);
   const [showErrorsModal, setShowErrorsModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
