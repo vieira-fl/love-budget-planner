@@ -129,14 +129,7 @@ export const defaultIncomeCategoryLabels: Record<IncomeCategory, string> = {
   outros: 'Outros',
 };
 
-export const defaultInvestmentCategoryLabels: Record<InvestmentCategory, string> = {
-  acoes: 'Ações',
-  renda_fixa: 'Renda Fixa',
-  fundos: 'Fundos',
-  crypto: 'Criptomoedas',
-  previdencia: 'Previdência',
-  outros: 'Outros',
-};
+export const defaultInvestmentCategoryLabels: Record<InvestmentCategory, string> = {};
 
 export const EXPENSE_CATEGORY_LABELS = EXPENSE_CATEGORY_KEYS.map(
   (key) => defaultExpenseCategoryLabels[key]
