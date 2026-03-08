@@ -249,7 +249,7 @@ const Index = () => {
                 variant="balance"
               />
               <SummaryCard
-                title="Investimentos Totais"
+                title="Reservas Totais"
                 value={totalInvestments}
                 icon={LineChart}
                 variant="investment"
