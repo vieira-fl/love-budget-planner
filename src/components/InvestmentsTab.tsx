@@ -322,7 +322,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
                       <TableCell>
                         {row.investment === 0 ? (
                           <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30">
-                            Sem investimento
+                            Sem reserva
                           </Badge>
                         ) : row.difference >= 0 ? (
                           <Badge className="bg-income/15 text-income border-income/30 hover:bg-income/20 gap-1">
