@@ -161,7 +161,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
         </Card>
         <Card className="bg-card card-shadow">
           <CardContent className="pt-5 pb-4">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Investido</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total em Reservas</p>
             <p className="text-2xl font-bold mt-1 text-investment">
               {formatCurrency(totalInvestments)}
             </p>
