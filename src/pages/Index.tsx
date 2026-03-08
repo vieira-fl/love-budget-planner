@@ -249,7 +249,7 @@ const Index = () => {
                 variant="balance"
               />
               <SummaryCard
-                title="Investimentos Totais"
+                title="Reservas Totais"
                 value={totalInvestments}
                 icon={LineChart}
                 variant="investment"
@@ -311,7 +311,7 @@ const Index = () => {
                   <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                   <TabsTrigger value="comparison">Comparativo</TabsTrigger>
                   <TabsTrigger value="split">Rateio</TabsTrigger>
-                  <TabsTrigger value="investments">Investimentos</TabsTrigger>
+                  <TabsTrigger value="investments">Reservas</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">

@@ -137,9 +137,9 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
           <div className="bg-muted/50 p-4 rounded-full w-fit mx-auto">
             <LineChartIcon className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold text-foreground">Nenhum investimento registrado</h3>
+          <h3 className="text-xl font-semibold text-foreground">Nenhuma reserva registrada</h3>
           <p className="text-muted-foreground">
-            Adicione transações do tipo Investimento para visualizar a análise aqui.
+            Adicione transações do tipo Reserva para visualizar a análise aqui.
           </p>
         </div>
       </div>
@@ -161,7 +161,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
         </Card>
         <Card className="bg-card card-shadow">
           <CardContent className="pt-5 pb-4">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Investido</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total em Reservas</p>
             <p className="text-2xl font-bold mt-1 text-investment">
               {formatCurrency(totalInvestments)}
             </p>
@@ -191,7 +191,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
             Por Categoria
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Defina metas para cada categoria de investimento e acompanhe o progresso.
+            Defina metas para cada categoria de reserva e acompanhe o progresso.
           </p>
         </CardHeader>
         <CardContent>
@@ -288,10 +288,10 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Wallet className="h-5 w-5 text-primary" />
-              Saldo Mensal vs Investimentos
+              Saldo Mensal vs Reservas
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Compara o saldo operacional (receitas − despesas) com os investimentos realizados em cada mês.
+              Compara o saldo operacional (receitas − despesas) com as reservas realizadas em cada mês.
             </p>
           </CardHeader>
           <CardContent>
@@ -301,7 +301,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
                   <TableRow>
                     <TableHead>Mês</TableHead>
                     <TableHead className="text-right">Saldo Operacional</TableHead>
-                    <TableHead className="text-right">Investimento</TableHead>
+                    <TableHead className="text-right">Reserva</TableHead>
                     <TableHead className="text-right">Resultado</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
@@ -322,7 +322,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
                       <TableCell>
                         {row.investment === 0 ? (
                           <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30">
-                            Sem investimento
+                            Sem reserva
                           </Badge>
                         ) : row.difference >= 0 ? (
                           <Badge className="bg-income/15 text-income border-income/30 hover:bg-income/20 gap-1">
@@ -380,7 +380,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
             <LineChartIcon className="h-5 w-5 text-investment" />
-            Detalhamento dos Investimentos
+            Detalhamento das Reservas
           </CardTitle>
         </CardHeader>
         <CardContent>

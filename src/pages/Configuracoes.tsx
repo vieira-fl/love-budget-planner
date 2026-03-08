@@ -161,7 +161,7 @@ export default function Configuracoes() {
   const lists: { type: ListType; title: string; description: string }[] = [
     { type: 'expense_category', title: 'Categorias de Despesa', description: 'Categorias disponíveis para classificar despesas.' },
     { type: 'income_category', title: 'Categorias de Receita', description: 'Categorias disponíveis para classificar receitas.' },
-    { type: 'investment_category', title: 'Categorias de Investimento', description: 'Categorias disponíveis para classificar investimentos.' },
+    { type: 'investment_category', title: 'Categorias de Reserva', description: 'Categorias disponíveis para classificar reservas.' },
     { type: 'payment_method', title: 'Formas de Pagamento', description: 'Métodos de pagamento disponíveis para despesas.' },
     { type: 'tag', title: 'Tags', description: 'Tags para agrupar e filtrar transações.' },
   ];
