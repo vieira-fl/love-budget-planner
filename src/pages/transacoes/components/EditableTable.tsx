@@ -183,6 +183,7 @@ export function EditableTable({
                   <Input
                     value={row.descricao}
                     onChange={(e) => onRowChange(row.id, "descricao", e.target.value)}
+                    onBlur={() => onDescriptionLookup?.(row.id, row.descricao)}
                     placeholder="Descrição"
                     className={cn("h-7 text-xs", descricaoError && errorClass)}
                     title={descricaoError}
