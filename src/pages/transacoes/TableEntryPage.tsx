@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw, Loader2, CheckCircle2, XCircle, X } from "lucide-react";
+import { ArrowLeft, Plus, Upload, Check, AlertTriangle, Trash2, RotateCcw, Loader2, CheckCircle2, XCircle, X, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTransactions } from "@/hooks/useTransactions";
 import { supabase } from "@/integrations/supabase/client";
