@@ -301,7 +301,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
                   <TableRow>
                     <TableHead>Mês</TableHead>
                     <TableHead className="text-right">Saldo Operacional</TableHead>
-                    <TableHead className="text-right">Investimento</TableHead>
+                    <TableHead className="text-right">Reserva</TableHead>
                     <TableHead className="text-right">Resultado</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
