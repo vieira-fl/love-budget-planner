@@ -565,6 +565,15 @@ function TableEntryContent() {
                 )}
               </Button>
 
+              <Button
+                onClick={handleAutoFillAll}
+                variant="outline"
+                disabled={!hasRows}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Auto-classificar
+              </Button>
+
               <Button onClick={handleValidate}>
                 <Check className="mr-2 h-4 w-4" />
                 Confirmar e validar
