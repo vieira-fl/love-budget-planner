@@ -170,7 +170,7 @@ function TableEntryContent() {
       const match = lookupTransaction(row.descricao);
       if (!match) continue;
       if (row.categoria === "Outros" || !row.categoria) {
-        updateRow(row.id, "categoria", match.categoria);
+        updateRow(row.id, "categoria", categoryKeyToLabel(match.categoria));
       }
       if (row.tipo === "Pontual" || !row.tipo) {
         updateRow(row.id, "tipo", match.tipo);
@@ -186,7 +186,7 @@ function TableEntryContent() {
     } else {
       toast.success(`${filled} linha(s) auto-classificada(s) com sucesso.`);
     }
-  }, [rows, lookupTransaction, updateRow]);
+  }, [rows, lookupTransaction, updateRow, categoryKeyToLabel]);
 
   const [showClearModal, setShowClearModal] = useState(false);
   const [showErrorsModal, setShowErrorsModal] = useState(false);
