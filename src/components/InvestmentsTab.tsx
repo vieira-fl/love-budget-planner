@@ -137,9 +137,9 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
           <div className="bg-muted/50 p-4 rounded-full w-fit mx-auto">
             <LineChartIcon className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold text-foreground">Nenhum investimento registrado</h3>
+          <h3 className="text-xl font-semibold text-foreground">Nenhuma reserva registrada</h3>
           <p className="text-muted-foreground">
-            Adicione transações do tipo Investimento para visualizar a análise aqui.
+            Adicione transações do tipo Reserva para visualizar a análise aqui.
           </p>
         </div>
       </div>
