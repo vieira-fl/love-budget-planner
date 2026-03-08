@@ -288,7 +288,7 @@ export function InvestmentsTab({ transactions, investmentCategoryLabels, totalIn
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Wallet className="h-5 w-5 text-primary" />
-              Saldo Mensal vs Investimentos
+              Saldo Mensal vs Reservas
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               Compara o saldo operacional (receitas − despesas) com os investimentos realizados em cada mês.
