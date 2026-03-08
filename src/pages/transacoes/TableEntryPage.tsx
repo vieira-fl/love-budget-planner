@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EditableTable } from "./components/EditableTable";
 import { ConfirmationModal, ErrorsModal, InfoModal, SaveErrorModal, ClearConfirmModal } from "./components/ValidationModals";
 import { useTableEntry } from "./hooks/useTableEntry";
+import { useTransactionLookup } from "./hooks/useTransactionLookup";
 import { ValidationResult } from "./types";
 import { parseBRL } from "./utils/tableEntryUtils";
 import { parseCsvContent } from "./utils/csvParser";
